@@ -294,6 +294,19 @@ namespace emulator
 		instructions[opcode].operation(*this);
 	}
 
+	static bool carry = false;
+
+	uint8_t cpu6502::add_register(
+		uint8_t byte,
+		uint8_t reg,
+		bool do_carry)
+	{
+		byte = (byte + reg) & 0xFF;
+		if (do_carry && byte < reg)
+			carry = true;
+		return byte;
+	}
+
 	void cpu6502::IMM()
 	{
 		address = PC;
@@ -310,7 +323,7 @@ namespace emulator
 		address = lo;
 	}
 
-	void cpu6502::ZPX()
+	void cpu6502::ZP(uint8_t reg)
 	{
 		address = PC;
 		PC++;
@@ -318,24 +331,20 @@ namespace emulator
 		clock.cycle();
 
 		address = lo;
+		lo = add_register(lo, reg);
 		clock.cycle();
 
-		lo = (lo + X) & 0xFF;
 		address = lo;
+	}
+
+	void cpu6502::ZPX()
+	{
+		ZP(X);
 	}
 
 	void cpu6502::ZPY()
 	{
-		address = PC;
-		PC++;
-		uint8_t lo = bus.read(address);
-		clock.cycle();
-
-		address = lo;
-		clock.cycle();
-
-		lo = (lo + Y) & 0xFF;
-		address = lo;
+		ZP(Y);
 	}
 
 	void cpu6502::ABS()
@@ -353,7 +362,7 @@ namespace emulator
 		address = (hi << 8) | lo;
 	}
 
-	void cpu6502::ABX()
+	void cpu6502::AB(uint8_t reg)
 	{
 		address = PC;
 		PC++;
@@ -363,126 +372,113 @@ namespace emulator
 		address = PC;
 		PC++;
 		uint8_t hi = bus.read(address);
+		lo = add_register(lo, reg, true);
 		clock.cycle();
-
-		lo = (lo + X) & 0xFF;
-		if (lo < X)
-			P.C = 1;
-
-		hi = (hi + P.C) & 0xFF;
 
 		address = (hi << 8) | lo;
 	}
 
+	void cpu6502::ABX()
+	{
+		AB(X);
+	}
+
 	void cpu6502::ABY()
 	{
-		address = PC;
-		PC++;
-		uint8_t lo = bus.read(address);
-		clock.cycle();
-
-		address = PC;
-		PC++;
-		uint8_t hi = bus.read(address);
-		clock.cycle();
-
-		lo = (lo + Y) & 0xFF;
-		if (lo < Y)
-			P.C = 1;
-
-		hi = (hi + P.C) & 0xFF;
-
-		address = (hi << 8) | lo;
+		AB(Y);
 	}
 
 	void cpu6502::IDX()
 	{
 		address = PC;
 		PC++;
-		uint8_t lo = bus.read(address);
+		uint8_t ptr = bus.read(address);
 		clock.cycle();
 		
-		address = lo;
+		address = ptr;
+		ptr = add_register(ptr, X);
 		clock.cycle();
 
-		lo = (lo + X) & 0xFF;
-		address = lo;
-		uint8_t adl = bus.read(address);
+		address = ptr;
+		uint8_t lo = bus.read(address);
 		clock.cycle();
 
-		address = lo + 1;
-		uint8_t adh = bus.read(address);
+		address = ptr + 1;
+		uint8_t hi = bus.read(address);
 		clock.cycle();
 
-		address = (adh << 8) | adl;
+		address = (hi << 8) | lo;
 	}
 
 	void cpu6502::IDY()
 	{
 		address = PC;
 		PC++;
+		uint8_t ptr = bus.read(address);
+		clock.cycle();
+
+		address = ptr;
 		uint8_t lo = bus.read(address);
 		clock.cycle();
 
-		address = lo;
-		uint8_t adl = bus.read(address);
+		address = ptr + 1;
+		uint8_t hi = bus.read(address);
+		lo = add_register(lo, Y, true);
 		clock.cycle();
 
-		address = lo + 1;
-		uint8_t adh = bus.read(address);
-		clock.cycle();
-
-		adl = (adl + Y) & 0xFF;
-		address = (adh << 8) | adl;
-		clock.cycle();
-
-		address = (adh << 8) | adl;
+		address = (hi << 8) | lo;
 	}
 
 	void cpu6502::LDA()
 	{
-		uint8_t data = bus.read(address);
+		uint8_t byte = bus.read(address);
 		clock.cycle();
 
-		if (P.C == 1)
+		if (carry)
 		{
-			data = bus.read(address);
+			address = address + 0x0100;
+			byte = bus.read(address);
 			clock.cycle();
+			carry = false;
 		}
 
-		A = data;
+		A = byte;
 		P.Z = (A == 0);
 		P.N = A & (1 << 7);
 	}
 
 	void cpu6502::LDX()
 	{
-		uint8_t data = bus.read(address);
+		uint8_t byte = bus.read(address);
 		clock.cycle();
 
-		if (P.C == 1)
+		if (carry)
 		{
-			data = bus.read(address);
+			address = address + 0x0100;
+			byte = bus.read(address);
 			clock.cycle();
+			carry = false;
 		}
 
-		X = data;
+		X = byte;
 		P.Z = (X == 0);
 		P.N = X & (1 << 7);
 	}
 
 	void cpu6502::LDY()
 	{
-		uint8_t data = bus.read(address);
+		uint8_t byte = bus.read(address);
 		clock.cycle();
 
-		if (P.C == 1)
+		if (carry)
 		{
-			data = bus.read(address);
+			address = address + 0x0100;
+			byte = bus.read(address);
 			clock.cycle();
+			carry = false;
 		}
 
-		Y = data;
+		Y = byte;
 		P.Z = (Y == 0);
 		P.N = Y & (1 << 7);
 	}
@@ -495,13 +491,13 @@ namespace emulator
 
 	void cpu6502::STX()
 	{
-		bus.write(address, A);
+		bus.write(address, X);
 		clock.cycle();
 	}
 
 	void cpu6502::STY()
 	{
-		bus.write(address, A);
+		bus.write(address, Y);
 		clock.cycle();
 	}
 
@@ -569,6 +565,7 @@ namespace emulator
 		clock.cycle();
 
 		address = S;
+		S--;
 		bus.write(address, A);
 		clock.cycle();
 	};
@@ -583,6 +580,10 @@ namespace emulator
 		clock.cycle();
 	};
 
-	void cpu6502::PLA() {};
+	void cpu6502::PLA()
+	{
+
+	};
+
 	void cpu6502::PLP() {};
 }

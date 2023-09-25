@@ -44,14 +44,20 @@ namespace emulator
 
 		void reset();
 		void execute();
+		uint8_t add_register(
+			uint8_t byte,
+			uint8_t reg,
+			bool do_carry = false);
 
 		// adressing modes
 		void IMM();
 		void ZPG();
+		void ZP(uint8_t reg);
 		void ZPX();
 		void ZPY();
 		void REL() {};
 		void ABS();
+		void AB(uint8_t reg);
 		void ABX();
 		void ABY();
 		void IND() {};
