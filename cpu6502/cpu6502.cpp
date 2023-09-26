@@ -277,7 +277,7 @@ namespace emulator
 
 		PC = 0x0200;
 
-		S = 0xFF;
+		S = 0x01FF;
 		P = {};
 
 		address = {};
@@ -429,7 +429,7 @@ namespace emulator
 		address = (hi << 8) | lo;
 	}
 
-	void cpu6502::LDA()
+	uint8_t cpu6502::read_byte()
 	{
 		uint8_t byte = bus.read(address);
 		clock.cycle();
@@ -442,43 +442,26 @@ namespace emulator
 			carry = false;
 		}
 
-		A = byte;
+		return byte;
+	}
+
+	void cpu6502::LDA()
+	{
+		A = read_byte();
 		P.Z = (A == 0);
 		P.N = A & (1 << 7);
 	}
 
 	void cpu6502::LDX()
 	{
-		uint8_t byte = bus.read(address);
-		clock.cycle();
-
-		if (carry)
-		{
-			address = address + 0x0100;
-			byte = bus.read(address);
-			clock.cycle();
-			carry = false;
-		}
-
-		X = byte;
+		X = read_byte();
 		P.Z = (X == 0);
 		P.N = X & (1 << 7);
 	}
 
 	void cpu6502::LDY()
 	{
-		uint8_t byte = bus.read(address);
-		clock.cycle();
-
-		if (carry)
-		{
-			address = address + 0x0100;
-			byte = bus.read(address);
-			clock.cycle();
-			carry = false;
-		}
-
-		Y = byte;
+		Y = read_byte();
 		P.Z = (Y == 0);
 		P.N = Y & (1 << 7);
 	}
@@ -576,14 +559,56 @@ namespace emulator
 		clock.cycle();
 
 		address = S;
-		bus.write(address, A);
+		S--;
+		bus.write(address, std::bit_cast<uint8_t>(P));
 		clock.cycle();
 	};
 
 	void cpu6502::PLA()
 	{
+		address = PC;
+		clock.cycle();
 
+		address = S;
+		S++;
+		A = bus.read(address);
+		clock.cycle();
 	};
 
-	void cpu6502::PLP() {};
+	void cpu6502::PLP()
+	{
+		address = PC;
+		clock.cycle();
+
+		address = S;
+		S++;
+		P = std::bit_cast<status>(bus.read(address));
+		clock.cycle();
+	};
+
+	void cpu6502::AND()
+	{
+		uint8_t byte = read_byte();
+		A = A & byte;
+		P.Z = (A == 0);
+		P.N = A & (1 << 7);
+	};
+
+	void cpu6502::EOR()
+	{
+		uint8_t byte = read_byte();
+		A = A ^ byte;
+		P.Z = (A == 0);
+		P.N = A & (1 << 7);
+	};
+
+	void cpu6502::ORA()
+	{
+		uint8_t byte = read_byte();
+		A = A | byte;
+		P.Z = (A == 0);
+		P.N = A & (1 << 7);
+	};
+
+	void cpu6502::BIT() {};
 }

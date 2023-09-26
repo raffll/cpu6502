@@ -4,6 +4,7 @@
 #include <array>
 #include <functional>
 #include <string>
+#include <bit>
 
 #include "clock.h"
 #include "bus.h"
@@ -18,29 +19,29 @@ namespace emulator
 		i_clock & clock;
 		i_bus & bus;
 
-		uint8_t A {};		// accumulator
-		uint8_t X {};		// x register
-		uint8_t Y {};		// y register
+		uint8_t A {};			// accumulator
+		uint8_t X {};			// x register
+		uint8_t Y {};			// y register
 
-		uint16_t PC {};		// program counter
+		uint16_t PC {};			// program counter
 
-		uint8_t S = {};		// stack pointer
+		uint8_t S = {};			// stack pointer
 
-		struct status		// processor status register
+		struct status
 		{
-			bool C;
-			bool Z;
-			bool I;
-			bool D;
-			bool B;
-			bool _;
-			bool V;
-			bool N;
+			uint8_t C : 1;		// carry flag
+			uint8_t Z : 1;		// zero flag
+			uint8_t I : 1;		// interrupt disable
+			uint8_t D : 1;		// decimal mode
+			uint8_t B : 1;		// break command
+			uint8_t _ : 1;
+			uint8_t V : 1;		// overflow flag
+			uint8_t N : 1;		// negative flag
 		};
-		
-		status P {};
 
-		uint16_t address {};
+		status P {};			// processor status register
+
+		uint16_t address {};	// address bus
 
 		void reset();
 		void execute();
@@ -64,6 +65,8 @@ namespace emulator
 		void IDX();
 		void IDY();
 
+		uint8_t read_byte();
+
 		// load/store operations
 		void LDA();
 		void LDX();
@@ -86,10 +89,10 @@ namespace emulator
 		void PLA();
 		void PLP();
 
-		void AND() {};
-		void EOR() {};
-		void ORA() {};
-		void BIT() {};
+		void AND();
+		void EOR();
+		void ORA();
+		void BIT();
 
 		void ADC() {};
 		void SBC() {};
