@@ -98,7 +98,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="cpu6502_test.cpp" />
+    <ClCompile Include="cpu6502_test.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\cpu6502\cpu6502.vcxproj">
