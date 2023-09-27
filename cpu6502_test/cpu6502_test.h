@@ -22,20 +22,20 @@ public:
 	void IMM(oc oppcode, uint8_t & reg)
 	{
 		bus.write(address, oppcode);
-		bus.write(address + 1, 0x0A);
+		bus.write(++address, 0x0A);
 		cpu.execute();
 
 		EXPECT_EQ(reg, 0x0A);
 		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
 
-		bus.write(address + 2, oppcode);
-		bus.write(address + 3, 0x00);
+		bus.write(++address, oppcode);
+		bus.write(++address, 0x00);
 		cpu.execute();
 
 		EXPECT_EQ(cpu.P.Z, 1);
 
-		bus.write(address + 4, oppcode);
-		bus.write(address + 5, 0x80);
+		bus.write(++address, oppcode);
+		bus.write(++address, 0x80);
 		cpu.execute();
 
 		EXPECT_EQ(cpu.P.N, 1);
@@ -456,12 +456,56 @@ TEST_F(cpu6502_test, TXS)
 	T(oc::TXS____, cpu.X, cpu.S, false);
 }
 
-//TEST_F(cpu6502_test, PHA)
-//{
-//	PH(oc::PHA____, cpu.X, cpu.S, false);
-//}
-//
-//TEST_F(cpu6502_test, TXS)
-//{
-//	T(oc::TXS____, cpu.X, cpu.S, false);
-//}
+TEST_F(cpu6502_test, PHA)
+{
+	auto oppcode = oc::PHA____;
+
+	bus.write(address, oppcode);
+	cpu.A = 0x0B;
+	cpu.execute();
+
+	EXPECT_EQ(cpu.S, 0xFE);
+	EXPECT_EQ(bus.read(0x00FF), 0x0B);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+}
+
+TEST_F(cpu6502_test, PHP)
+{
+	auto oppcode = oc::PHP____;
+
+	bus.write(address, oppcode);
+	cpu.P.N = 1;
+	cpu.execute();
+
+	EXPECT_EQ(cpu.S, 0xFE);
+	EXPECT_EQ(bus.read(0x00FF), 0x80);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+}
+
+TEST_F(cpu6502_test, PLA)
+{
+	auto oppcode = oc::PLA____;
+
+	bus.write(address, oppcode);
+	bus.write(0x00FF, 0x0C);
+	cpu.S = 0xFE;
+	cpu.execute();
+
+	EXPECT_EQ(cpu.S, 0xFF);
+	EXPECT_EQ(cpu.A, 0x0C);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+}
+
+TEST_F(cpu6502_test, PLP)
+{
+	auto oppcode = oc::PLP____;
+
+	bus.write(address, oppcode);
+	bus.write(0x00FF, 0x80);
+	cpu.S = 0xFE;
+	cpu.execute();
+
+	EXPECT_EQ(cpu.S, 0xFF);
+	EXPECT_EQ(cpu.P.N, 1);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+}

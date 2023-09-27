@@ -277,7 +277,7 @@ namespace emulator
 
 		PC = 0x0200;
 
-		S = {};
+		S = 0xFF;
 		P = {};
 
 		address = {};
@@ -570,8 +570,8 @@ namespace emulator
 		clock.cycle();
 
 		address = S;
-		S--;
 		bus.write(address, A);
+		S--;
 		clock.cycle();
 	};
 
@@ -581,8 +581,8 @@ namespace emulator
 		clock.cycle();
 
 		address = S;
-		S--;
 		bus.write(address, std::bit_cast<uint8_t>(P));
+		S--;
 		clock.cycle();
 	};
 
@@ -593,6 +593,9 @@ namespace emulator
 
 		address = S;
 		S++;
+		clock.cycle();
+
+		address = S;
 		uint8_t data = bus.read(address);
 		clock.cycle();
 
@@ -606,6 +609,9 @@ namespace emulator
 
 		address = S;
 		S++;
+		clock.cycle();
+
+		address = S;
 		uint8_t data = bus.read(address);
 		clock.cycle();
 
@@ -616,32 +622,32 @@ namespace emulator
 	{
 		uint8_t data = load_data();
 		A = A & data;
-		P.Z = (A == 0);
-		P.N = A & (1 << 7);
+		P.Z = check_Z(A);
+		P.N = check_N(A);
 	};
 
 	void cpu6502::EOR()
 	{
 		uint8_t data = load_data();
 		A = A ^ data;
-		P.Z = (A == 0);
-		P.N = A & (1 << 7);
+		P.Z = check_Z(A);
+		P.N = check_N(A);
 	};
 
 	void cpu6502::ORA()
 	{
 		uint8_t data = load_data();
 		A = A | data;
-		P.Z = (A == 0);
-		P.N = A & (1 << 7);
+		P.Z = check_Z(A);
+		P.N = check_N(A);
 	};
 
 	void cpu6502::BIT()
 	{
 		uint8_t data = load_data();
-		P.Z = ((A & data) == 0);
-		P.V = data & (1 << 6);
-		P.N = data & (1 << 7);
+		P.Z = check_Z(A & data);
+		P.V = ((data & (1 << 6)) != 0);
+		P.N = check_N(data);
 	};
 
 	void cpu6502::ADC()
