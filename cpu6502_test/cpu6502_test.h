@@ -41,10 +41,15 @@ public:
 		EXPECT_EQ(cpu.P.N, 1);
 	}
 
-	void LD_ZPG(oc oppcode, uint8_t & reg)
+	void ZPG(oc oppcode)
 	{
 		bus.write(address, oppcode);
-		bus.write(address + 1, 0x0A);
+		bus.write(++address, 0x0A);
+	}
+
+	void LD_ZPG(oc oppcode, uint8_t & reg)
+	{
+		ZPG(oppcode);
 		bus.write(0x000A, 0x0B);
 		cpu.execute();
 
@@ -54,12 +59,29 @@ public:
 
 	void ST_ZPG(oc oppcode, uint8_t & reg)
 	{
-		bus.write(address, oppcode);
-		bus.write(address + 1, 0x0A);
+		ZPG(oppcode);
 		reg = 0x0B;
 		cpu.execute();
 
 		EXPECT_EQ(bus.read(0x000A), 0x0B);
+		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+	}
+
+	struct numbers
+	{
+		uint8_t a;
+		uint8_t b;
+		uint8_t c;
+	};
+
+	void logic_ZPG(oc oppcode, numbers n)
+	{
+		ZPG(oppcode);
+		bus.write(0x000A, n.a);
+		cpu.A = n.b;
+		cpu.execute();
+
+		EXPECT_EQ(cpu.A, n.c);
 		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
 	}
 
@@ -508,4 +530,22 @@ TEST_F(cpu6502_test, PLP)
 	EXPECT_EQ(cpu.S, 0xFF);
 	EXPECT_EQ(cpu.P.N, 1);
 	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+}
+
+TEST_F(cpu6502_test, AND_ZPG)
+{
+	auto oppcode = oc::AND_ZPG;
+
+	ZPG(oppcode);
+	bus.write(0x000A, 0x06);
+	cpu.A = 0x03;
+	cpu.execute();
+
+	EXPECT_EQ(cpu.A, 0x02);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+}
+
+TEST_F(cpu6502_test, AND_ZPG)
+{
+	logic_ZPG(oc::AND_ZPG, { 0x06, 0x03, 0x02 });
 }

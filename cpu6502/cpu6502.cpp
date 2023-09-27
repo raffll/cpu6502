@@ -646,8 +646,8 @@ namespace emulator
 	{
 		uint8_t data = load_data();
 		P.Z = check_Z(A & data);
-		P.V = ((data & (1 << 6)) != 0);
 		P.N = check_N(data);
+		P.V = ((data & (1 << 6)) != 0);
 	};
 
 	void cpu6502::ADC()
