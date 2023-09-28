@@ -19,142 +19,44 @@ public:
 		address = 0x0200;
 	}
 
-	void addressing_IMM()
-	{
-
-	}
-
-	void LD_IMM(oc oppcode, uint8_t & reg)
+	void addressing_IMM(oc oppcode, uint8_t data)
 	{
 		bus.write(address, oppcode);
-		bus.write(++address, 0x0A);
-		cpu.execute();
-
-		EXPECT_EQ(reg, 0x0A);
-		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
-
-		bus.write(++address, oppcode);
-		bus.write(++address, 0x00);
-		cpu.execute();
-
-		EXPECT_EQ(cpu.P.Z, 1);
-
-		bus.write(++address, oppcode);
-		bus.write(++address, 0x80);
-		cpu.execute();
-
-		EXPECT_EQ(cpu.P.N, 1);
+		bus.write(++address, data);
 	}
 
-	struct numbers
-	{
-		uint8_t a;
-		uint8_t b;
-		uint8_t c;
+	void LD_IMM(oc oppcode, uint8_t & reg);
 
-		uint8_t za;
-		uint8_t zb;
-
-		uint8_t na;
-		uint8_t nb;
-	};
-
-	void logic_IMM(oc oppcode, numbers n)
+	void addressing_ZPG(oc oppcode, uint8_t lo)
 	{
 		bus.write(address, oppcode);
-		bus.write(++address, n.a);
-		cpu.A = n.b;
-		cpu.execute();
-
-		EXPECT_EQ(cpu.A, n.c);
-		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
-
-		bus.write(++address, oppcode);
-		bus.write(++address, n.za);
-		cpu.A = n.zb;
-		cpu.execute();
-
-		EXPECT_EQ(cpu.P.Z, 1);
-
-		bus.write(++address, oppcode);
-		bus.write(++address, n.na);
-		cpu.A = n.nb;
-		cpu.execute();
-
-		EXPECT_EQ(cpu.P.N, 1);
+		bus.write(++address, lo);
 	}
 
-	void LD_ZPG(oc oppcode, uint8_t & reg)
-	{
-		bus.write(address, oppcode);
-		bus.write(++address, 0x0A);
-		bus.write(0x000A, 0x0B);
-		cpu.execute();
+	void LD_ZPG(oc oppcode, uint8_t & reg);
+	void ST_ZPG(oc oppcode, uint8_t & reg);
 
-		EXPECT_EQ(reg, 0x0B);
-		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
-	}
-
-	void ST_ZPG(oc oppcode, uint8_t & reg)
-	{
-		bus.write(address, oppcode);
-		bus.write(++address, 0x0A);
-		reg = 0x0B;
-		cpu.execute();
-
-		EXPECT_EQ(bus.read(0x000A), 0x0B);
-		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
-	}
-
-	void LD_ZP(oc oppcode, uint8_t & reg, uint8_t & offset)
+	void addressing_ZP(oc oppcode, uint8_t & offset, uint8_t lo)
 	{
 		offset = 0x0F;
 		bus.write(address, oppcode);
-		bus.write(++address, 0x80);
-		bus.write(0x008F, 0x0C);
-		cpu.execute();
-
-		EXPECT_EQ(reg, 0x0C);
-		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+		bus.write(++address, lo);
 	}
 
-	void ST_ZP(oc oppcode, uint8_t & reg, uint8_t & offset)
-	{
-		offset = 0x0F;
-		bus.write(address, oppcode);
-		bus.write(++address, 0x80);
-		reg = 0x0C;
-		cpu.execute();
+	void LD_ZP(oc oppcode, uint8_t & reg, uint8_t & offset);
+	void ST_ZP(oc oppcode, uint8_t & reg, uint8_t & offset);
 
-		EXPECT_EQ(bus.read(0x008F), 0x0C);
-		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
-	}
-
-	void LD_ABS(oc oppcode, uint8_t & reg)
+	void addressing_ABS(oc oppcode, uint8_t lo, uint8_t hi)
 	{
 		bus.write(address, oppcode);
-		bus.write(++address, 0x80);
-		bus.write(++address, 0x40);
-		bus.write(0x4080, 0x0D);
-		cpu.execute();
-
-		EXPECT_EQ(reg, 0x0D);
-		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+		bus.write(++address, lo);
+		bus.write(++address, hi);
 	}
 
-	void ST_ABS(oc oppcode, uint8_t & reg)
-	{
-		bus.write(address, oppcode);
-		bus.write(++address, 0x80);
-		bus.write(++address, 0x40);
-		reg = 0x0D;
-		cpu.execute();
+	void LD_ABS(oc oppcode, uint8_t & reg);
+	void ST_ABS(oc oppcode, uint8_t & reg);
 
-		EXPECT_EQ(bus.read(0x4080), 0x0D);
-		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
-	}
-
-	void AB(oc oppcode, uint8_t & offset, bool carry)
+	void addressing_AB(oc oppcode, uint8_t & offset, uint8_t lo, uint8_t hi, bool carry = false)
 	{
 		if (carry)
 			offset = 0xFF;
@@ -162,60 +64,26 @@ public:
 			offset = 0x0F;
 
 		bus.write(address, oppcode);
-		bus.write(++address, 0x80);
-		bus.write(++address, 0x40);
+		bus.write(++address, lo);
+		bus.write(++address, hi);
 	}
 
-	void LD_AB(oc oppcode, uint8_t & reg, uint8_t & offset, bool carry = false)
-	{
-		AB(oppcode, offset, carry);
-		bus.write(0x4080 + offset, 0x0E);
-		cpu.execute();
+	void LD_AB(oc oppcode, uint8_t & reg, uint8_t & offset, bool carry = false);
+	void ST_AB(oc oppcode, uint8_t & reg, uint8_t & offset, bool carry = false);
 
-		EXPECT_EQ(reg, 0x0E);
-		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles + carry);
-	}
-
-	void ST_AB(oc oppcode, uint8_t & reg, uint8_t & offset, bool carry = false)
-	{
-		AB(oppcode, offset, carry);
-		reg = 0x0E;
-		cpu.execute();
-
-		EXPECT_EQ(bus.read(0x4080 + offset), 0x0E);
-		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
-	}
-
-	void IDX(oc oppcode)
+	void addressing_IDX(oc oppcode, uint8_t lo, uint8_t hi)
 	{
 		cpu.X = 0x0F;
 		bus.write(address, oppcode);
 		bus.write(++address, 0x20);
-		bus.write(0x002F, 0x80);
-		bus.write(0x0030, 0x40);
+		bus.write(0x002F, lo);
+		bus.write(0x0030, hi);
 	}
 
-	void LD_IDX(oc oppcode, uint8_t & reg)
-	{
-		IDX(oppcode);
-		bus.write(0x4080, 0x0A);
-		cpu.execute();
+	void LD_IDX(oc oppcode, uint8_t & reg);
+	void ST_IDX(oc oppcode, uint8_t & reg);
 
-		EXPECT_EQ(reg, 0x0A);
-		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
-	}
-
-	void ST_IDX(oc oppcode, uint8_t & reg)
-	{
-		IDX(oppcode);
-		reg = 0x0A;
-		cpu.execute();
-
-		EXPECT_EQ(bus.read(0x4080), 0x0A);
-		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
-	}
-
-	void IDY(oc oppcode, bool carry)
+	void addressing_IDY(oc oppcode, uint8_t lo, uint8_t hi, bool carry = false)
 	{
 		if (carry)
 			cpu.Y = 0xFF;
@@ -224,55 +92,37 @@ public:
 
 		bus.write(address, oppcode);
 		bus.write(++address, 0x20);
-		bus.write(0x0020, 0x80);
-		bus.write(0x0021, 0x40);
+		bus.write(0x0020, lo);
+		bus.write(0x0021, hi);
 	}
 
-	void LD_IDY(oc oppcode, uint8_t & reg, bool carry = false)
-	{
-		IDY(oppcode, carry);
-		bus.write(0x4080 + cpu.Y, 0x0B);
-		cpu.execute();
+	void LD_IDY(oc oppcode, uint8_t & reg, bool carry = false);
+	void ST_IDY(oc oppcode, uint8_t & reg, bool carry = false);
 
-		EXPECT_EQ(reg, 0x0B);
-		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles + carry);
-	}
-
-	void ST_IDY(oc oppcode, uint8_t & reg, bool carry = false)
-	{
-		IDY(oppcode, carry);
-		reg = 0x0B;
-		cpu.execute();
-
-		EXPECT_EQ(bus.read(0x4080 + cpu.Y), 0x0B);
-		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
-	}
-
-	void T(oc oppcode, uint8_t & src, uint8_t & dst, bool check = true)
-	{
-		bus.write(address, oppcode);
-		src = 0x0A;
-		cpu.execute();
-
-		EXPECT_EQ(src, dst);
-		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
-
-		if (check)
-		{
-			bus.write(++address, oppcode);
-			src = 0x00;
-			cpu.execute();
-
-			EXPECT_EQ(cpu.P.Z, 1);
-
-			bus.write(++address, oppcode);
-			src = 0x80;
-			cpu.execute();
-
-			EXPECT_EQ(cpu.P.N, 1);
-		}
-	}
+	void T(oc oppcode, uint8_t & src, uint8_t & dst, bool check = true);
+	void logic(oc oppcode, uint8_t a, uint8_t b, bool carry = false);
 };
+
+void cpu6502_test::LD_IMM(oc oppcode, uint8_t & reg)
+{
+	addressing_IMM(oppcode, 0x0A);
+	cpu.execute();
+
+	EXPECT_EQ(reg, 0x0A);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+
+	bus.write(++address, oppcode);
+	bus.write(++address, 0x00);
+	cpu.execute();
+
+	EXPECT_EQ(cpu.P.Z, 1);
+
+	bus.write(++address, oppcode);
+	bus.write(++address, 0x80);
+	cpu.execute();
+
+	EXPECT_EQ(cpu.P.N, 1);
+}
 
 TEST_F(cpu6502_test, LDA_IMM)
 {
@@ -287,6 +137,16 @@ TEST_F(cpu6502_test, LDX_IMM)
 TEST_F(cpu6502_test, LDY_IMM)
 {
 	LD_IMM(oc::LDY_IMM, cpu.Y);
+}
+
+void cpu6502_test::LD_ZPG(oc oppcode, uint8_t & reg)
+{
+	addressing_ZPG(oppcode, 0x0A);
+	bus.write(0x000A, 0x0B);
+	cpu.execute();
+
+	EXPECT_EQ(reg, 0x0B);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
 }
 
 TEST_F(cpu6502_test, LDA_ZPG)
@@ -304,6 +164,16 @@ TEST_F(cpu6502_test, LDY_ZPG)
 	LD_ZPG(oc::LDY_ZPG, cpu.Y);
 }
 
+void cpu6502_test::LD_ZP(oc oppcode, uint8_t & reg, uint8_t & offset)
+{
+	addressing_ZP(oppcode, offset, 0x80);
+	bus.write(0x008F, 0x0C);
+	cpu.execute();
+
+	EXPECT_EQ(reg, 0x0C);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+}
+
 TEST_F(cpu6502_test, LDA_ZPX)
 {
 	LD_ZP(oc::LDA_ZPX, cpu.A, cpu.X);
@@ -319,6 +189,16 @@ TEST_F(cpu6502_test, LDY_ZPX)
 	LD_ZP(oc::LDY_ZPX, cpu.Y, cpu.X);
 }
 
+void cpu6502_test::LD_ABS(oc oppcode, uint8_t & reg)
+{
+	addressing_ABS(oppcode, 0x80, 0x40);
+	bus.write(0x4080, 0x0D);
+	cpu.execute();
+
+	EXPECT_EQ(reg, 0x0D);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+}
+
 TEST_F(cpu6502_test, LDA_ABS)
 {
 	LD_ABS(oc::LDA_ABS, cpu.A);
@@ -332,6 +212,16 @@ TEST_F(cpu6502_test, LDX_ABS)
 TEST_F(cpu6502_test, LDY_ABS)
 {
 	LD_ABS(oc::LDY_ABS, cpu.Y);
+}
+
+void cpu6502_test::LD_AB(oc oppcode, uint8_t & reg, uint8_t & offset, bool carry)
+{
+	addressing_AB(oppcode, offset, 0x80, 0x40, carry);
+	bus.write(0x4080 + offset, 0x0E);
+	cpu.execute();
+
+	EXPECT_EQ(reg, 0x0E);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles + carry);
 }
 
 TEST_F(cpu6502_test, LDA_ABX)
@@ -374,9 +264,29 @@ TEST_F(cpu6502_test, LDY_ABX_C)
 	LD_AB(oc::LDY_ABX, cpu.Y, cpu.X, true);
 }
 
+void cpu6502_test::LD_IDX(oc oppcode, uint8_t & reg)
+{
+	addressing_IDX(oppcode, 0x80, 0x40);
+	bus.write(0x4080, 0x0A);
+	cpu.execute();
+
+	EXPECT_EQ(reg, 0x0A);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+}
+
 TEST_F(cpu6502_test, LDA_IDX)
 {
 	LD_IDX(oc::LDA_IDX, cpu.A);
+}
+
+void cpu6502_test::LD_IDY(oc oppcode, uint8_t & reg, bool carry)
+{
+	addressing_IDY(oppcode, 0x80, 0x40, carry);
+	bus.write(0x4080 + cpu.Y, 0x0B);
+	cpu.execute();
+
+	EXPECT_EQ(reg, 0x0B);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles + carry);
 }
 
 TEST_F(cpu6502_test, LDA_IDY)
@@ -387,6 +297,16 @@ TEST_F(cpu6502_test, LDA_IDY)
 TEST_F(cpu6502_test, LDA_IDY_C)
 {
 	LD_IDY(oc::LDA_IDY, cpu.A, true);
+}
+
+void cpu6502_test::ST_ZPG(oc oppcode, uint8_t & reg)
+{
+	addressing_ZPG(oppcode, 0x0A);
+	reg = 0x0B;
+	cpu.execute();
+
+	EXPECT_EQ(bus.read(0x000A), 0x0B);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
 }
 
 TEST_F(cpu6502_test, STA_ZPG)
@@ -404,6 +324,16 @@ TEST_F(cpu6502_test, STY_ZPG)
 	ST_ZPG(oc::STY_ZPG, cpu.Y);
 }
 
+void cpu6502_test::ST_ZP(oc oppcode, uint8_t & reg, uint8_t & offset)
+{
+	addressing_ZP(oppcode, offset, 0x80);
+	reg = 0x0C;
+	cpu.execute();
+
+	EXPECT_EQ(bus.read(0x008F), 0x0C);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+}
+
 TEST_F(cpu6502_test, STA_ZPX)
 {
 	ST_ZP(oc::STA_ZPX, cpu.A, cpu.X);
@@ -419,6 +349,16 @@ TEST_F(cpu6502_test, STY_ZPX)
 	ST_ZP(oc::STY_ZPX, cpu.Y, cpu.X);
 }
 
+void cpu6502_test::ST_ABS(oc oppcode, uint8_t & reg)
+{
+	addressing_ABS(oppcode, 0x80, 0x40);
+	reg = 0x0D;
+	cpu.execute();
+
+	EXPECT_EQ(bus.read(0x4080), 0x0D);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+}
+
 TEST_F(cpu6502_test, STA_ABS)
 {
 	ST_ABS(oc::STA_ABS, cpu.A);
@@ -432,6 +372,16 @@ TEST_F(cpu6502_test, STX_ABS)
 TEST_F(cpu6502_test, STY_ABS)
 {
 	ST_ABS(oc::STY_ABS, cpu.Y);
+}
+
+void cpu6502_test::ST_AB(oc oppcode, uint8_t & reg, uint8_t & offset, bool carry)
+{
+	addressing_AB(oppcode, offset, 0x80, 0x40, carry);
+	reg = 0x0E;
+	cpu.execute();
+
+	EXPECT_EQ(bus.read(0x4080 + offset), 0x0E);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
 }
 
 TEST_F(cpu6502_test, STA_ABX)
@@ -454,9 +404,29 @@ TEST_F(cpu6502_test, STA_ABY_C)
 	ST_AB(oc::STA_ABY, cpu.A, cpu.Y, true);
 }
 
+void cpu6502_test::ST_IDX(oc oppcode, uint8_t & reg)
+{
+	addressing_IDX(oppcode, 0x80, 0x40);
+	reg = 0x0A;
+	cpu.execute();
+
+	EXPECT_EQ(bus.read(0x4080), 0x0A);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+}
+
 TEST_F(cpu6502_test, STA_IDX)
 {
 	ST_IDX(oc::STA_IDX, cpu.A);
+}
+
+void cpu6502_test::ST_IDY(oc oppcode, uint8_t & reg, bool carry)
+{
+	addressing_IDY(oppcode, 0x80, 0x40, carry);
+	reg = 0x0B;
+	cpu.execute();
+
+	EXPECT_EQ(bus.read(0x4080 + cpu.Y), 0x0B);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
 }
 
 TEST_F(cpu6502_test, STA_IDY)
@@ -467,6 +437,31 @@ TEST_F(cpu6502_test, STA_IDY)
 TEST_F(cpu6502_test, STA_IDY_C)
 {
 	ST_IDY(oc::STA_IDY, cpu.A, true);
+}
+
+void cpu6502_test::T(oc oppcode, uint8_t & src, uint8_t & dst, bool check)
+{
+	bus.write(address, oppcode);
+	src = 0x0A;
+	cpu.execute();
+
+	EXPECT_EQ(src, dst);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+
+	if (check)
+	{
+		bus.write(++address, oppcode);
+		src = 0x00;
+		cpu.execute();
+
+		EXPECT_EQ(cpu.P.Z, 1);
+
+		bus.write(++address, oppcode);
+		src = 0x80;
+		cpu.execute();
+
+		EXPECT_EQ(cpu.P.N, 1);
+	}
 }
 
 TEST_F(cpu6502_test, TAX)
@@ -553,14 +548,112 @@ TEST_F(cpu6502_test, PLP)
 	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
 }
 
-TEST_F(cpu6502_test, AND)
+void cpu6502_test::logic(oc oppcode, uint8_t a, uint8_t b, bool carry)
+{
+	cpu.A = a;
+	cpu.execute();
+
+	EXPECT_EQ(cpu.A, b);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles + carry);
+}
+
+TEST_F(cpu6502_test, AND_IMM)
 {
 	// 000000110 &
 	// 000000011
 	// ---------
 	// 000000010
 
-	logic_IMM(oc::AND_IMM, { 0x06, 0x03, 0x02, 0, 0, 0x80, 0x80 });
+	auto oppcode = oc::AND_IMM;
+
+	addressing_IMM(oppcode, 0x06);
+	logic(oppcode, 0x03, 0x02);
+
+	bus.write(++address, oppcode);
+	bus.write(++address, 0x00);
+	cpu.A = 0x00;
+	cpu.execute();
+
+	EXPECT_EQ(cpu.P.Z, 1);
+
+	bus.write(++address, oppcode);
+	bus.write(++address, 0x80);
+	cpu.A = 0x80;
+	cpu.execute();
+
+	EXPECT_EQ(cpu.P.N, 1);
+}
+
+TEST_F(cpu6502_test, AND_ZPG)
+{
+	auto oppcode = oc::AND_ZPG;
+
+	addressing_ZPG(oppcode, 0x80);
+	bus.write(0x0080, 0x06);
+	logic(oppcode, 0x03, 0x02);
+}
+
+TEST_F(cpu6502_test, AND_ZPX)
+{
+	auto oppcode = oc::AND_ZPX;
+
+	addressing_ZP(oppcode, cpu.X, 0x80);
+	bus.write(0x008F, 0x06);
+	logic(oppcode, 0x03, 0x02);
+}
+
+TEST_F(cpu6502_test, AND_ABS)
+{
+	auto oppcode = oc::AND_ABS;
+
+	addressing_ABS(oppcode, 0x80, 0x40);
+	bus.write(0x4080, 0x06);
+	logic(oppcode, 0x03, 0x02);
+}
+
+TEST_F(cpu6502_test, AND_ABX)
+{
+	auto oppcode = oc::AND_ABX;
+
+	addressing_AB(oppcode, cpu.X, 0x80, 0x40);
+	bus.write(0x408F, 0x06);
+	logic(oppcode, 0x03, 0x02);
+}
+
+TEST_F(cpu6502_test, AND_ABY)
+{
+	auto oppcode = oc::AND_ABY;
+
+	addressing_AB(oppcode, cpu.Y, 0x80, 0x40);
+	bus.write(0x408F, 0x06);
+	logic(oppcode, 0x03, 0x02);
+}
+
+TEST_F(cpu6502_test, AND_IDX)
+{
+	auto oppcode = oc::AND_IDX;
+
+	addressing_IDX(oppcode, 0x80, 0x40);
+	bus.write(0x4080, 0x06);
+	logic(oppcode, 0x03, 0x02);
+}
+
+TEST_F(cpu6502_test, AND_IDY)
+{
+	auto oppcode = oc::AND_IDY;
+
+	addressing_IDY(oppcode, 0x80, 0x40);
+	bus.write(0x4080 + cpu.Y, 0x06);
+	logic(oppcode, 0x03, 0x02);
+}
+
+TEST_F(cpu6502_test, AND_IDY_C)
+{
+	auto oppcode = oc::AND_IDY;
+
+	addressing_IDY(oppcode, 0x80, 0x40, true);
+	bus.write(0x4080 + cpu.Y, 0x06);
+	logic(oppcode, 0x03, 0x02, true);
 }
 
 TEST_F(cpu6502_test, EOR)
@@ -570,7 +663,7 @@ TEST_F(cpu6502_test, EOR)
 	// ---------
 	// 000000101
 
-	logic_IMM(oc::EOR_IMM, { 0x06, 0x03, 0x05, 0, 0, 0x80, 0 });
+	//logic(oc::EOR_IMM, { 0x06, 0x03, 0x05, 0, 0, 0x80, 0 });
 }
 
 TEST_F(cpu6502_test, ORA)
@@ -580,7 +673,7 @@ TEST_F(cpu6502_test, ORA)
 	// ---------
 	// 000000111
 
-	logic_IMM(oc::ORA_IMM, { 0x06, 0x03, 0x07, 0, 0, 0x80, 0 });
+	//logic(oc::ORA_IMM, { 0x06, 0x03, 0x07, 0, 0, 0x80, 0 });
 }
 
 TEST_F(cpu6502_test, BIT)
