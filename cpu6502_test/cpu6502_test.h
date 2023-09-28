@@ -878,3 +878,72 @@ TEST_F(cpu6502_test, BIT_ABS)
 	EXPECT_EQ(cpu.P.N, 1);
 	EXPECT_EQ(cpu.A, 0xFF);
 }
+
+TEST_F(cpu6502_test, ADC_IMM)
+{
+	auto oppcode = oc::ADC_IMM;
+
+	addressing_IMM(oppcode, 0x01);
+	cpu.A = 0x02;
+	cpu.P.C = 1;
+	cpu.execute();
+
+	EXPECT_EQ(cpu.A, 0x04);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+
+	bus.write(++address, oppcode);
+	bus.write(++address, 0xFF);
+
+	cpu.A = 0x01;
+	cpu.P.C = 0;
+	cpu.execute();
+
+	EXPECT_EQ(cpu.P.C, 1);
+
+	bus.write(++address, oppcode);
+	bus.write(++address, 0xFF);
+
+	cpu.A = 0x01;
+	cpu.P.C = 0;
+	cpu.execute();
+
+	EXPECT_EQ(cpu.P.Z, 1);
+
+	bus.write(++address, oppcode);
+	bus.write(++address, 0x7F);
+
+	cpu.A = 0x01;
+	cpu.P.C = 0;
+	cpu.execute();
+
+	EXPECT_EQ(cpu.P.N, 1);
+
+	bus.write(++address, oppcode);
+	bus.write(++address, 0x40);
+
+	cpu.A = 0x40;
+	cpu.P.C = 0;
+	cpu.execute();
+
+	EXPECT_EQ(cpu.P.V, 1);
+
+	bus.write(++address, oppcode);
+	bus.write(++address, 0x80);
+
+	cpu.A = 0x80;
+	cpu.P.C = 0;
+	cpu.P.V = 0;
+	cpu.execute();
+
+	EXPECT_EQ(cpu.P.V, 1);
+
+	bus.write(++address, oppcode);
+	bus.write(++address, 0x80);
+
+	cpu.A = 0x40;
+	cpu.P.C = 0;
+	cpu.P.V = 0;
+	cpu.execute();
+
+	EXPECT_EQ(cpu.P.V, 0);
+}

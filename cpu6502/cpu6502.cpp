@@ -653,12 +653,14 @@ namespace emulator
 	void cpu6502::ADC()
 	{
 		uint8_t data = load_data();
-		uint16_t sum = A + data + P.C;
-		P.C = sum > 0xFF;
-		P.Z = (sum == 0);
-		P.V = ~(A ^ data) & (A ^ sum) & 0x80;
-		P.N = sum & (1 << 7);
-		A = static_cast<uint8_t>(sum);
+		uint16_t result = A + data + P.C;
+		
+		P.C = result > 0xFF;
+		P.V = ((A ^ static_cast<uint8_t>(result)) & (data ^ static_cast<uint8_t>(result)) & 0x80) != 0;
+
+		A = static_cast<uint8_t>(result);
+		P.Z = check_Z(result);
+		P.N = check_N(result);
 	};
 
 	void cpu6502::SBC() {};
