@@ -19,6 +19,11 @@ public:
 		address = 0x0200;
 	}
 
+	void addressing_IMM()
+	{
+
+	}
+
 	void LD_IMM(oc oppcode, uint8_t & reg)
 	{
 		bus.write(address, oppcode);
@@ -576,4 +581,29 @@ TEST_F(cpu6502_test, ORA)
 	// 000000111
 
 	logic_IMM(oc::ORA_IMM, { 0x06, 0x03, 0x07, 0, 0, 0x80, 0 });
+}
+
+TEST_F(cpu6502_test, BIT)
+{
+	auto oppcode = oc::BIT_ZPG;
+
+	bus.write(address, oppcode);
+	bus.write(++address, 0x0A);
+	bus.write(0x000A, 0x00);
+	cpu.A = 0x00;
+	cpu.execute();
+
+	EXPECT_EQ(cpu.P.Z, 1);
+	EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+
+	bus.write(++address, oppcode);
+	bus.write(++address, 0x0A);
+	bus.write(0x000A, 0xFE);
+	cpu.A = 0xFF;
+	cpu.execute();
+
+	EXPECT_EQ(cpu.P.Z, 0);
+	EXPECT_EQ(cpu.P.V, 1);
+	EXPECT_EQ(cpu.P.N, 1);
+	EXPECT_EQ(cpu.A, 0xFF);
 }
