@@ -45,6 +45,7 @@ namespace emulator
 
 		void reset();
 		void execute();
+		void run();
 
 		// adressing modes
 		void IMM();				// immediate

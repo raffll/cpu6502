@@ -300,6 +300,21 @@ namespace emulator
 		instructions[opcode].operation(*this);
 	}
 
+	void cpu6502::run()
+	{
+		try
+		{
+			while (true)
+			{
+				execute();
+			}
+		}
+		catch (const std::exception & e)
+		{
+
+		}
+	}
+
 	static uint8_t add_register(
 		uint8_t byte,
 		uint8_t reg,
