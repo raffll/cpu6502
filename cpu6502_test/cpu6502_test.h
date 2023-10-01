@@ -98,6 +98,8 @@ namespace emulator
 
 		void transfer(oc oppcode, uint8_t & src, uint8_t & dst, bool check = true);
 		void logic(oc oppcode, uint8_t a, uint8_t b);
+		void add(oc oppcode);
+		void substract(oc oppcode);
 	};
 
 	void cpu6502_test::load_IMM(oc oppcode, uint8_t & reg)
@@ -862,17 +864,22 @@ namespace emulator
 		EXPECT_EQ(cpu.A, 0xFF);
 	}
 
-	TEST_F(cpu6502_test, ADC_IMM)
+	void cpu6502_test::add(oc oppcode)
 	{
-		auto oppcode = oc::ADC_IMM;
-
-		addressing_IMM(oppcode, 0x01);
 		cpu.A = 0x02;
 		cpu.P.C = 1;
 		cpu.execute();
 
 		EXPECT_EQ(cpu.A, 0x04);
 		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+	}
+
+	TEST_F(cpu6502_test, ADC_IMM_P)
+	{
+		auto oppcode = oc::ADC_IMM;
+
+		addressing_IMM(oppcode, 0x01);
+		add(oppcode);
 
 		addressing_IMM(oppcode, 0xFF);
 		cpu.A = 0x01;
@@ -911,5 +918,187 @@ namespace emulator
 		cpu.execute();
 
 		EXPECT_EQ(cpu.P.V, 0);
+	}
+
+	TEST_F(cpu6502_test, ADC_ZPG)
+	{
+		auto oppcode = oc::ADC_ZPG;
+
+		addressing_ZPG(oppcode, 0x80);
+		bus.write(0x0080, 0x01);
+		add(oppcode);
+	}
+
+	TEST_F(cpu6502_test, ADC_ZPX)
+	{
+		auto oppcode = oc::ADC_ZPX;
+
+		addressing_ZP(oppcode, cpu.X, 0x80);
+		bus.write(0x0080 + cpu.X, 0x01);
+		add(oppcode);
+	}
+
+	TEST_F(cpu6502_test, ADC_ABS)
+	{
+		auto oppcode = oc::ADC_ABS;
+
+		addressing_ABS(oppcode, 0x80, 0x40);
+		bus.write(0x4080, 0x01);
+		add(oppcode);
+	}
+
+	TEST_F(cpu6502_test, ADC_ABX)
+	{
+		auto oppcode = oc::ADC_ABX;
+
+		addressing_AB(oppcode, cpu.X, 0x80, 0x40);
+		bus.write(0x4080 + cpu.X, 0x01);
+		add(oppcode);
+	}
+
+	TEST_F(cpu6502_test, ADC_ABY)
+	{
+		auto oppcode = oc::ADC_ABY;
+
+		addressing_AB(oppcode, cpu.Y, 0x80, 0x40);
+		bus.write(0x4080 + cpu.Y, 0x01);
+		add(oppcode);
+	}
+
+	TEST_F(cpu6502_test, ADC_IDX)
+	{
+		auto oppcode = oc::ADC_IDX;
+
+		addressing_IDX(oppcode, 0x80, 0x40);
+		bus.write(0x4080, 0x01);
+		add(oppcode);
+	}
+
+	TEST_F(cpu6502_test, ADC_IDY)
+	{
+		auto oppcode = oc::ADC_IDY;
+
+		addressing_IDY(oppcode, 0x80, 0x40);
+		bus.write(0x4080 + cpu.Y, 0x01);
+		add(oppcode);
+	}
+
+	void cpu6502_test::substract(oc oppcode)
+	{
+		cpu.A = 0x05;
+		cpu.P.C = 0;
+		cpu.execute();
+
+		EXPECT_EQ(cpu.A, 0x02);
+		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(oppcode).cycles);
+	}
+
+	TEST_F(cpu6502_test, SBC_IMM_P)
+	{
+		auto oppcode = oc::SBC_IMM;
+
+		addressing_IMM(oppcode, 0x02);
+		substract(oppcode);
+
+		addressing_IMM(oppcode, 0x04);
+		cpu.A = 0x05;
+		cpu.P.C = 0;
+		cpu.execute();
+
+		EXPECT_EQ(cpu.P.C, 1);
+		EXPECT_EQ(cpu.P.Z, 1);
+
+		addressing_IMM(oppcode, 0x7F);
+		cpu.A = 0x01;
+		cpu.P.C = 0;
+		cpu.execute();
+
+		EXPECT_EQ(cpu.P.N, 1);
+
+		addressing_IMM(oppcode, 0x40);
+		cpu.A = 0x40;
+		cpu.P.C = 1;
+		cpu.execute();
+
+		EXPECT_EQ(cpu.P.V, 1);
+
+		addressing_IMM(oppcode, 0x80);
+		cpu.A = 0x80;
+		cpu.P.C = 0;
+		cpu.P.V = 1;
+		cpu.execute();
+
+		EXPECT_EQ(cpu.P.V, 1);
+
+		addressing_IMM(oppcode, 0x80);
+		cpu.A = 0x40;
+		cpu.P.C = 0;
+		cpu.P.V = 0;
+		cpu.execute();
+
+		EXPECT_EQ(cpu.P.V, 0);
+	}
+
+	TEST_F(cpu6502_test, SBC_ZPG)
+	{
+		auto oppcode = oc::SBC_ZPG;
+
+		addressing_ZPG(oppcode, 0x80);
+		bus.write(0x0080, 0x02);
+		substract(oppcode);
+	}
+
+	TEST_F(cpu6502_test, SBC_ZPX)
+	{
+		auto oppcode = oc::SBC_ZPX;
+
+		addressing_ZP(oppcode, cpu.X, 0x80);
+		bus.write(0x0080 + cpu.X, 0x02);
+		substract(oppcode);
+	}
+
+	TEST_F(cpu6502_test, SBC_ABS)
+	{
+		auto oppcode = oc::SBC_ABS;
+
+		addressing_ABS(oppcode, 0x80, 0x40);
+		bus.write(0x4080, 0x02);
+		substract(oppcode);
+	}
+
+	TEST_F(cpu6502_test, SBC_ABX)
+	{
+		auto oppcode = oc::SBC_ABX;
+
+		addressing_AB(oppcode, cpu.X, 0x80, 0x40);
+		bus.write(0x4080 + cpu.X, 0x02);
+		substract(oppcode);
+	}
+
+	TEST_F(cpu6502_test, SBC_ABY)
+	{
+		auto oppcode = oc::SBC_ABY;
+
+		addressing_AB(oppcode, cpu.Y, 0x80, 0x40);
+		bus.write(0x4080 + cpu.Y, 0x02);
+		substract(oppcode);
+	}
+
+	TEST_F(cpu6502_test, SBC_IDX)
+	{
+		auto oppcode = oc::SBC_IDX;
+
+		addressing_IDX(oppcode, 0x80, 0x40);
+		bus.write(0x4080, 0x02);
+		substract(oppcode);
+	}
+
+	TEST_F(cpu6502_test, SBC_IDY)
+	{
+		auto oppcode = oc::SBC_IDY;
+
+		addressing_IDY(oppcode, 0x80, 0x40); 
+		bus.write(0x4080 + cpu.Y, 0x02);
+		substract(oppcode);
 	}
 }

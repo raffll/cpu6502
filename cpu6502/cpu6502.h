@@ -48,6 +48,7 @@ namespace emulator
 		void run();
 
 		// adressing modes
+		void ACC();				// accumulator
 		void IMM();				// immediate
 		void ZPG();				// zero page
 		void ZPX();				// zero page, X
@@ -97,22 +98,26 @@ namespace emulator
 		void CPX();
 		void CPY();
 
-		void INC() {};
-		void INX() {};
-		void INY() {};
-		void DEC() {};
-		void DEX() {};
-		void DEY() {};
+		// increments & decrements
+		void INC();
+		void INX();
+		void INY();
+		void DEC();
+		void DEX();
+		void DEY();
 
-		void ASL() {};
-		void LSR() {};
-		void ROL() {};
-		void ROR() {};
+		// shifts
+		void ASL();
+		void LSR();
+		void ROL();
+		void ROR();
 
+		// jumps & calls
 		void JMP() {};
 		void JSR() {};
 		void RTS() {};
 
+		// branches
 		void BCC() {};
 		void BCS() {};
 		void BEQ() {};
@@ -122,6 +127,7 @@ namespace emulator
 		void BVC() {};
 		void BVS() {};
 
+		// status flag changes
 		void CLC() {};
 		void CLD() {};
 		void CLI() {};
@@ -130,6 +136,7 @@ namespace emulator
 		void SED() {};
 		void SEI() {};
 
+		// system functions
 		void BRK() {};
 		void NOP() {};
 		void RTI() {};
@@ -148,7 +155,7 @@ namespace emulator
 			_0x07__ = 0x07,
 			PHP____ = 0x08,
 			ORA_IMM = 0x09,
-			ASL____ = 0x0A,
+			ASL_ACC = 0x0A,
 			_0x0B__ = 0x0B,
 			_0x0C__ = 0x0C,
 			ORA_ABS = 0x0D,
@@ -180,7 +187,7 @@ namespace emulator
 			_0x27__ = 0x27,
 			PLP____ = 0x28,
 			AND_IMM = 0x29,
-			ROL____ = 0x2A,
+			ROL_ACC = 0x2A,
 			_0x2B__ = 0x2B,
 			BIT_ABS = 0x2C,
 			AND_ABS = 0x2D,
@@ -212,7 +219,7 @@ namespace emulator
 			_0x47__ = 0x47,
 			PHA____ = 0x48,
 			EOR_IMM = 0x49,
-			LSR____ = 0x4A,
+			LSR_ACC = 0x4A,
 			_0x4B__ = 0x4B,
 			JMP_ABS = 0x4C,
 			EOR_ABS = 0x4D,
@@ -244,7 +251,7 @@ namespace emulator
 			_0x67__ = 0x67,
 			PLA____ = 0x68,
 			ADC_IMM = 0x69,
-			ROR____ = 0x6A,
+			ROR_ACC = 0x6A,
 			_0x6B__ = 0x6B,
 			JMP_IND = 0x6C,
 			ADC_ABS = 0x6D,
@@ -408,8 +415,10 @@ namespace emulator
 	private:
 		void zero_page(uint8_t reg);
 		void absolute(uint8_t reg);
-		uint8_t load_data();
-		void store_data(uint8_t & reg);
-		void adc_sbc(uint8_t data);
+		auto load() -> uint8_t;
+		void store(uint8_t & reg);
+		void add_or_substract(uint8_t data);
+		void increment(uint8_t & reg);
+		void decrement(uint8_t & reg);
 	};
 }

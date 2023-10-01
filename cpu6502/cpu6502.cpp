@@ -285,11 +285,13 @@ namespace emulator
 
 	static bool add_cycle = false;
 	static bool add_carry = false;
+	static bool acc_addressing = false;
 
 	void cpu6502::execute()
 	{
 		add_cycle = false;
 		add_carry = false;
+		acc_addressing = false;
 
 		address = PC;
 		PC++;
@@ -324,6 +326,11 @@ namespace emulator
 		add_cycle = do_carry;
 		add_carry = do_carry && byte < reg;
 		return byte;
+	}
+
+	void cpu6502::ACC()
+	{
+		acc_addressing = true;
 	}
 
 	void cpu6502::IMM()
@@ -448,7 +455,7 @@ namespace emulator
 		address = (hi << 8) | lo;
 	}
 
-	uint8_t cpu6502::load_data()
+	uint8_t cpu6502::load()
 	{
 		uint8_t data = bus.read(address);
 		clock.cycle();
@@ -475,26 +482,26 @@ namespace emulator
 
 	void cpu6502::LDA()
 	{
-		A = load_data();
+		A = load();
 		P.Z = check_Z(A);
 		P.N = check_N(A);
 	}
 
 	void cpu6502::LDX()
 	{
-		X = load_data();
+		X = load();
 		P.Z = check_Z(X);
 		P.N = check_N(X);
 	}
 
 	void cpu6502::LDY()
 	{
-		Y = load_data();
+		Y = load();
 		P.Z = check_Z(Y);
 		P.N = check_N(Y);
 	}
 
-	void cpu6502::store_data(uint8_t & reg)
+	void cpu6502::store(uint8_t & reg)
 	{
 		if (add_carry)
 			address = address + 0x0100;
@@ -508,17 +515,17 @@ namespace emulator
 
 	void cpu6502::STA()
 	{
-		store_data(A);
+		store(A);
 	}
 
 	void cpu6502::STX()
 	{
-		store_data(X);
+		store(X);
 	}
 
 	void cpu6502::STY()
 	{
-		store_data(Y);
+		store(Y);
 	}
 
 	void cpu6502::TAX()
@@ -635,7 +642,7 @@ namespace emulator
 
 	void cpu6502::AND()
 	{
-		uint8_t data = load_data();
+		uint8_t data = load();
 		A = A & data;
 		P.Z = check_Z(A);
 		P.N = check_N(A);
@@ -643,7 +650,7 @@ namespace emulator
 
 	void cpu6502::EOR()
 	{
-		uint8_t data = load_data();
+		uint8_t data = load();
 		A = A ^ data;
 		P.Z = check_Z(A);
 		P.N = check_N(A);
@@ -651,7 +658,7 @@ namespace emulator
 
 	void cpu6502::ORA()
 	{
-		uint8_t data = load_data();
+		uint8_t data = load();
 		A = A | data;
 		P.Z = check_Z(A);
 		P.N = check_N(A);
@@ -659,13 +666,13 @@ namespace emulator
 
 	void cpu6502::BIT()
 	{
-		uint8_t data = load_data();
+		uint8_t data = load();
 		P.Z = check_Z(A & data);
 		P.N = check_N(data);
 		P.V = ((data & (1 << 6)) != 0);
 	};
 
-	void cpu6502::adc_sbc(uint8_t data)
+	void cpu6502::add_or_substract(uint8_t data)
 	{
 		uint16_t result = A + data + P.C;
 
@@ -680,19 +687,19 @@ namespace emulator
 
 	void cpu6502::ADC()
 	{
-		uint8_t data = load_data();
-		adc_sbc(data);
+		uint8_t data = load();
+		add_or_substract(data);
 	};
 
 	void cpu6502::SBC()
 	{
-		uint8_t data = ~load_data();
-		adc_sbc(data);
+		uint8_t data = ~load();
+		add_or_substract(data);
 	};
 
 	void cpu6502::CMP()
 	{
-		uint8_t data = load_data();
+		uint8_t data = load();
 
 		P.C = A >= data;
 		P.Z = check_Z(A - data);
@@ -701,7 +708,7 @@ namespace emulator
 
 	void cpu6502::CPX()
 	{
-		uint8_t data = load_data();
+		uint8_t data = load();
 
 		P.C = X >= data;
 		P.Z = check_Z(X - data);
@@ -710,10 +717,81 @@ namespace emulator
 
 	void cpu6502::CPY()
 	{
-		uint8_t data = load_data();
+		uint8_t data = load();
 
 		P.C = Y >= data;
 		P.Z = check_Z(Y - data);
 		P.N = check_N(Y - data);
+	};
+
+	void cpu6502::increment(uint8_t & reg)
+	{
+		reg++;
+		P.Z = check_Z(reg);
+		P.N = check_N(reg);
+	}
+
+	void cpu6502::INC()
+	{
+		increment(A);
+	};
+
+	void cpu6502::INX()
+	{
+		increment(X);
+	};
+
+	void cpu6502::INY()
+	{
+		increment(Y);
+	};
+
+	void cpu6502::decrement(uint8_t & reg)
+	{
+		reg--;
+		P.Z = check_Z(reg);
+		P.N = check_N(reg);
+	}
+
+	void cpu6502::DEC()
+	{
+		decrement(A);
+	};
+
+	void cpu6502::DEX()
+	{
+		decrement(X);
+	};
+
+	void cpu6502::DEY()
+	{
+		decrement(Y);
+	};
+
+	void cpu6502::ASL()
+	{
+		if (acc_addressing)
+		{
+			A = A << 1;
+		}
+		else
+		{
+			auto data = load();
+			data = data << 1;
+			store(data);
+		}
+	};
+
+	void cpu6502::LSR()
+	{
+
+	};
+	void cpu6502::ROL()
+	{
+
+	};
+	void cpu6502::ROR()
+	{
+
 	};
 }
