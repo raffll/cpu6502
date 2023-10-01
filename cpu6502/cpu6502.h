@@ -406,9 +406,10 @@ namespace emulator
 		static const std::vector<instruction_t> instructions;
 
 	private:
-		void ZP(uint8_t reg);
-		void AB(uint8_t reg);
+		void zero_page(uint8_t reg);
+		void absolute(uint8_t reg);
 		uint8_t load_data();
 		void store_data(uint8_t & reg);
+		void adc_sbc(uint8_t data);
 	};
 }

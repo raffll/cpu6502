@@ -342,7 +342,7 @@ namespace emulator
 		address = lo;
 	}
 
-	void cpu6502::ZP(uint8_t reg)
+	void cpu6502::zero_page(uint8_t reg)
 	{
 		address = PC;
 		PC++;
@@ -358,12 +358,12 @@ namespace emulator
 
 	void cpu6502::ZPX()
 	{
-		ZP(X);
+		zero_page(X);
 	}
 
 	void cpu6502::ZPY()
 	{
-		ZP(Y);
+		zero_page(Y);
 	}
 
 	void cpu6502::ABS()
@@ -381,7 +381,7 @@ namespace emulator
 		address = (hi << 8) | lo;
 	}
 
-	void cpu6502::AB(uint8_t reg)
+	void cpu6502::absolute(uint8_t reg)
 	{
 		address = PC;
 		PC++;
@@ -399,12 +399,12 @@ namespace emulator
 
 	void cpu6502::ABX()
 	{
-		AB(X);
+		absolute(X);
 	}
 
 	void cpu6502::ABY()
 	{
-		AB(Y);
+		absolute(Y);
 	}
 
 	void cpu6502::IDX()
@@ -665,23 +665,55 @@ namespace emulator
 		P.V = ((data & (1 << 6)) != 0);
 	};
 
-	void cpu6502::ADC()
+	void cpu6502::adc_sbc(uint8_t data)
 	{
-		uint8_t data = load_data();
 		uint16_t result = A + data + P.C;
-		
+
 		P.C = result > 0xFF;
-		P.V = 
-			((A ^ static_cast<uint8_t>(result)) &
+		P.V = ((A ^ static_cast<uint8_t>(result)) &
 			(data ^ static_cast<uint8_t>(result)) & 0x80) != 0;
 
 		A = static_cast<uint8_t>(result);
 		P.Z = check_Z(A);
 		P.N = check_N(A);
+	}
+
+	void cpu6502::ADC()
+	{
+		uint8_t data = load_data();
+		adc_sbc(data);
 	};
 
-	void cpu6502::SBC() {};
-	void cpu6502::CMP() {};
-	void cpu6502::CPX() {};
-	void cpu6502::CPY() {};
+	void cpu6502::SBC()
+	{
+		uint8_t data = ~load_data();
+		adc_sbc(data);
+	};
+
+	void cpu6502::CMP()
+	{
+		uint8_t data = load_data();
+
+		P.C = A >= data;
+		P.Z = check_Z(A - data);
+		P.N = check_N(A - data);
+	};
+
+	void cpu6502::CPX()
+	{
+		uint8_t data = load_data();
+
+		P.C = X >= data;
+		P.Z = check_Z(X - data);
+		P.N = check_N(X - data);
+	};
+
+	void cpu6502::CPY()
+	{
+		uint8_t data = load_data();
+
+		P.C = Y >= data;
+		P.Z = check_Z(Y - data);
+		P.N = check_N(Y - data);
+	};
 }
