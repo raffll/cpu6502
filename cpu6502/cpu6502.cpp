@@ -528,54 +528,39 @@ namespace emulator
 		store(Y);
 	}
 
-	void cpu6502::TAX()
+	void cpu6502::transfer(uint8_t & src, uint8_t & dst)
 	{
 		address = PC;
 		clock.cycle();
 
-		X = A;
-		P.Z = check_Z(X);
-		P.N = check_N(X);
+		dst = src;
+		P.Z = check_Z(dst);
+		P.N = check_N(dst);
+	}
+
+	void cpu6502::TAX()
+	{
+		transfer(A, X);
 	};
 
 	void cpu6502::TAY()
 	{
-		address = PC;
-		clock.cycle();
-
-		Y = A;
-		P.Z = check_Z(Y);
-		P.N = check_N(Y);
+		transfer(A, Y);
 	};
 
 	void cpu6502::TXA()
 	{
-		address = PC;
-		clock.cycle();
-
-		A = X;
-		P.Z = check_Z(A);
-		P.N = check_N(A);
+		transfer(X, A);
 	};
 
 	void cpu6502::TYA()
 	{
-		address = PC;
-		clock.cycle();
-
-		A = Y;
-		P.Z = check_Z(A);
-		P.N = check_N(A);
+		transfer(Y, A);
 	};
 
 	void cpu6502::TSX()
 	{
-		address = PC;
-		clock.cycle();
-
-		X = S;
-		P.Z = check_Z(X);
-		P.N = check_N(X);
+		transfer(S, X);
 	};
 
 	void cpu6502::TXS()
@@ -586,29 +571,28 @@ namespace emulator
 		S = X;
 	};
 
-	void cpu6502::PHA()
+	void cpu6502::push(uint8_t data)
 	{
 		address = PC;
 		clock.cycle();
 
 		address = S;
-		bus.write(address, A);
+		bus.write(address, data);
 		S--;
 		clock.cycle();
+	}
+
+	void cpu6502::PHA()
+	{
+		push(A);
 	};
 
 	void cpu6502::PHP()
 	{
-		address = PC;
-		clock.cycle();
-
-		address = S;
-		bus.write(address, std::bit_cast<uint8_t>(P));
-		S--;
-		clock.cycle();
+		push(std::bit_cast<uint8_t>(P));
 	};
 
-	void cpu6502::PLA()
+	uint8_t cpu6502::pull()
 	{
 		address = PC;
 		clock.cycle();
@@ -621,23 +605,17 @@ namespace emulator
 		uint8_t data = bus.read(address);
 		clock.cycle();
 
-		A = data;
+		return data;
+	}
+
+	void cpu6502::PLA()
+	{
+		A = pull();
 	};
 
 	void cpu6502::PLP()
 	{
-		address = PC;
-		clock.cycle();
-
-		address = S;
-		S++;
-		clock.cycle();
-
-		address = S;
-		uint8_t data = bus.read(address);
-		clock.cycle();
-
-		P = std::bit_cast<status>(data);
+		P = std::bit_cast<status>(pull());
 	};
 
 	void cpu6502::AND()
@@ -697,31 +675,28 @@ namespace emulator
 		add_or_substract(data);
 	};
 
-	void cpu6502::CMP()
+	void cpu6502::compare(uint8_t & reg)
 	{
 		uint8_t data = load();
 
-		P.C = A >= data;
-		P.Z = check_Z(A - data);
-		P.N = check_N(A - data);
+		P.C = reg >= data;
+		P.Z = check_Z(reg - data);
+		P.N = check_N(reg - data);
+	}
+
+	void cpu6502::CMP()
+	{
+		compare(A);
 	};
 
 	void cpu6502::CPX()
 	{
-		uint8_t data = load();
-
-		P.C = X >= data;
-		P.Z = check_Z(X - data);
-		P.N = check_N(X - data);
+		compare(X);
 	};
 
 	void cpu6502::CPY()
 	{
-		uint8_t data = load();
-
-		P.C = Y >= data;
-		P.Z = check_Z(Y - data);
-		P.N = check_N(Y - data);
+		compare(Y);
 	};
 
 	void cpu6502::increment(uint8_t & reg)

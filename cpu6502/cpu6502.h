@@ -19,6 +19,8 @@ namespace emulator
 		i_clock & clock;
 		i_bus & bus;
 
+		using reg_t = uint8_t;
+
 		uint8_t A {};			// accumulator
 		uint8_t X {};			// x register
 		uint8_t Y {};			// y register
@@ -417,8 +419,12 @@ namespace emulator
 		void absolute(uint8_t reg);
 		auto load() -> uint8_t;
 		void store(uint8_t & reg);
+		void transfer(uint8_t & src, uint8_t & dst);
+		void push(uint8_t data);
+		auto pull() -> uint8_t;
 		void add_or_substract(uint8_t data);
 		void increment(uint8_t & reg);
 		void decrement(uint8_t & reg);
+		void compare(uint8_t & reg);
 	};
 }
