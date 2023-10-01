@@ -59,7 +59,7 @@ namespace emulator
 		void IND() {};			// indirect
 		void IDX();				// indexed indirect
 		void IDY();				// indirect indexed
-		
+
 		// load operations
 		void LDA();
 		void LDX();
@@ -136,7 +136,7 @@ namespace emulator
 
 		void ___() {};
 
-		enum oppcode
+		enum oppcode : uint8_t
 		{
 			BRK____ = 0x00,
 			ORA_IDX = 0x01,
@@ -398,9 +398,9 @@ namespace emulator
 
 		struct instruction_t
 		{
-			std::function<void(cpu6502 &)> operation;
-			std::function<void(cpu6502 &)> addressing;
-			int cycles {};
+			const std::function<void(cpu6502 &)> operation;
+			const std::function<void(cpu6502 &)> addressing;
+			const int cycles {};
 		};
 
 		static const std::vector<instruction_t> instructions;
