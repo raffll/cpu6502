@@ -8,5 +8,7 @@ namespace emulator
 		virtual void reset() = 0;
 		virtual uint8_t read(uint16_t address) = 0;
 		virtual void write(uint16_t address, uint8_t byte) = 0;
+
+		virtual ~i_bus() {}
 	};
 }

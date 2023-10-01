@@ -1,4 +1,5 @@
 #include "bus.h"
+#include "types.h"
 
 namespace emulator
 {
@@ -9,7 +10,7 @@ namespace emulator
 
 	void bus::reset()
 	{
-		std::fill(memory.begin(), memory.end(), 0x00);
+		std::fill(memory.begin(), memory.end(), 0x00_uint8_t);
 	}
 
 	uint8_t bus::read(uint16_t address)

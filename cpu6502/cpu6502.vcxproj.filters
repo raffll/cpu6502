@@ -6,6 +6,7 @@
     <ClInclude Include="bus.h" />
     <ClInclude Include="i_bus.h" />
     <ClInclude Include="i_clock.h" />
+    <ClInclude Include="types.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cpu6502.cpp" />

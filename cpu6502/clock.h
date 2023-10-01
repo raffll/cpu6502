@@ -11,6 +11,8 @@ namespace emulator
 		void cycle() override;
 		size_t get_cycles() override;
 
+		~clock() override {};
+
 	private:
 		size_t cycles {};
 	};
