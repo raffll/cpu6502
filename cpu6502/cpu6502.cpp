@@ -309,7 +309,7 @@ namespace emulator
 				execute();
 			}
 		}
-		catch (const std::exception & e)
+		catch (const std::exception &)
 		{
 
 		}
@@ -671,11 +671,13 @@ namespace emulator
 		uint16_t result = A + data + P.C;
 		
 		P.C = result > 0xFF;
-		P.V = ((A ^ static_cast<uint8_t>(result)) & (data ^ static_cast<uint8_t>(result)) & 0x80) != 0;
+		P.V = 
+			((A ^ static_cast<uint8_t>(result)) &
+			(data ^ static_cast<uint8_t>(result)) & 0x80) != 0;
 
 		A = static_cast<uint8_t>(result);
-		P.Z = check_Z(result);
-		P.N = check_N(result);
+		P.Z = check_Z(A);
+		P.N = check_N(A);
 	};
 
 	void cpu6502::SBC() {};

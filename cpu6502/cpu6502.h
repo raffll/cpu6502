@@ -50,26 +50,20 @@ namespace emulator
 		// adressing modes
 		void IMM();				// immediate
 		void ZPG();				// zero page
-		void ZP(uint8_t reg);
 		void ZPX();				// zero page, X
 		void ZPY();				// zero page, Y
 		void REL() {};			// relative
 		void ABS();				// absolute
-		void AB(uint8_t reg);
 		void ABX();				// absolute, X
 		void ABY();				// absolute, Y
 		void IND() {};			// indirect
 		void IDX();				// indexed indirect
 		void IDY();				// indirect indexed
-
-		uint8_t load_data();
 		
 		// load operations
 		void LDA();
 		void LDX();
 		void LDY();
-
-		void store_data(uint8_t & reg);
 
 		// store operations
 		void STA();
@@ -90,11 +84,13 @@ namespace emulator
 		void PLA();
 		void PLP();
 
+		// logical
 		void AND();
 		void EOR();
 		void ORA();
 		void BIT();
 
+		// arithmetic
 		void ADC();
 		void SBC();
 		void CMP();
@@ -408,5 +404,11 @@ namespace emulator
 		};
 
 		static const std::vector<instruction_t> instructions;
+
+	private:
+		void ZP(uint8_t reg);
+		void AB(uint8_t reg);
+		uint8_t load_data();
+		void store_data(uint8_t & reg);
 	};
 }
