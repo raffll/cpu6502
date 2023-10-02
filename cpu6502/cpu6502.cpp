@@ -470,12 +470,12 @@ namespace emulator
 		return data;
 	}
 
-	static bool check_Z(uint8_t data)
+	static bool is_zero(uint8_t data)
 	{
 		return data == 0;
 	}
 
-	static bool check_N(uint8_t data)
+	static bool is_negative(uint8_t data)
 	{
 		return (data & (1 << 7)) != 0;
 	}
@@ -483,22 +483,22 @@ namespace emulator
 	void cpu6502::LDA()
 	{
 		A = load();
-		P.Z = check_Z(A);
-		P.N = check_N(A);
+		P.Z = is_zero(A);
+		P.N = is_negative(A);
 	}
 
 	void cpu6502::LDX()
 	{
 		X = load();
-		P.Z = check_Z(X);
-		P.N = check_N(X);
+		P.Z = is_zero(X);
+		P.N = is_negative(X);
 	}
 
 	void cpu6502::LDY()
 	{
 		Y = load();
-		P.Z = check_Z(Y);
-		P.N = check_N(Y);
+		P.Z = is_zero(Y);
+		P.N = is_negative(Y);
 	}
 
 	void cpu6502::store(uint8_t data)
@@ -534,8 +534,8 @@ namespace emulator
 		clock.cycle();
 
 		dst = src;
-		P.Z = check_Z(dst);
-		P.N = check_N(dst);
+		P.Z = is_zero(dst);
+		P.N = is_negative(dst);
 	}
 
 	void cpu6502::TAX()
@@ -622,31 +622,31 @@ namespace emulator
 	{
 		uint8_t data = load();
 		A = A & data;
-		P.Z = check_Z(A);
-		P.N = check_N(A);
+		P.Z = is_zero(A);
+		P.N = is_negative(A);
 	};
 
 	void cpu6502::EOR()
 	{
 		uint8_t data = load();
 		A = A ^ data;
-		P.Z = check_Z(A);
-		P.N = check_N(A);
+		P.Z = is_zero(A);
+		P.N = is_negative(A);
 	};
 
 	void cpu6502::ORA()
 	{
 		uint8_t data = load();
 		A = A | data;
-		P.Z = check_Z(A);
-		P.N = check_N(A);
+		P.Z = is_zero(A);
+		P.N = is_negative(A);
 	};
 
 	void cpu6502::BIT()
 	{
 		uint8_t data = load();
-		P.Z = check_Z(A & data);
-		P.N = check_N(data);
+		P.Z = is_zero(A & data);
+		P.N = is_negative(data);
 		P.V = (data & (1 << 6)) != 0;
 	};
 
@@ -659,8 +659,8 @@ namespace emulator
 			(data ^ static_cast<uint8_t>(result)) & 0x80) != 0;
 
 		A = static_cast<uint8_t>(result);
-		P.Z = check_Z(A);
-		P.N = check_N(A);
+		P.Z = is_zero(A);
+		P.N = is_negative(A);
 	}
 
 	void cpu6502::ADC()
@@ -680,8 +680,8 @@ namespace emulator
 		uint8_t rhs = load();
 
 		P.C = lhs >= rhs;
-		P.Z = check_Z(lhs - rhs);
-		P.N = check_N(lhs - rhs);
+		P.Z = is_zero(lhs - rhs);
+		P.N = is_negative(lhs - rhs);
 	}
 
 	void cpu6502::CMP()
@@ -702,8 +702,8 @@ namespace emulator
 	void cpu6502::increment(uint8_t & reg)
 	{
 		reg++;
-		P.Z = check_Z(reg);
-		P.N = check_N(reg);
+		P.Z = is_zero(reg);
+		P.N = is_negative(reg);
 	}
 
 	void cpu6502::INC()
@@ -724,8 +724,8 @@ namespace emulator
 	void cpu6502::decrement(uint8_t & reg)
 	{
 		reg--;
-		P.Z = check_Z(reg);
-		P.N = check_N(reg);
+		P.Z = is_zero(reg);
+		P.N = is_negative(reg);
 	}
 
 	void cpu6502::DEC()
@@ -749,20 +749,11 @@ namespace emulator
 		{
 			P.C = reg & (1 << 7);
 			reg = reg << 1;
-			check_Z(reg);
-			check_N(reg);
+			P.Z = is_zero(reg);
+			P.N = is_negative(reg);
 		};
 
-		if (acc_addressing)
-		{
-			shift(A);
-		}
-		else
-		{
-			uint8_t data = load();
-			shift(data);
-			store(data);
-		}
+		f(shift, acc_addressing);
 	};
 
 	void cpu6502::LSR()
@@ -771,49 +762,41 @@ namespace emulator
 		{
 			P.C = reg & 1;
 			reg = 1 >> reg;
-			check_Z(reg);
-			check_N(reg);
+			P.Z = is_zero(reg);
+			P.N = is_negative(reg);
 		};
 
-		if (acc_addressing)
-		{
-			shift(A);
-		}
-		else
-		{
-			uint8_t data = load();
-			shift(data);
-			store(data);
-		}
+		f(shift, acc_addressing);
 	};
 
 	void cpu6502::ROL()
 	{
 		auto shift = [&](auto & reg)
 		{
-			bool bit7 = reg & (1 << 7);
+			bool is_carry = reg & (1 << 7);
 			reg = reg << 1;
 			reg = reg | P.C;
-			P.C = bit7;
-			check_Z(reg);
-			check_N(reg);
+			P.C = is_carry;
+			P.Z = is_zero(reg);
+			P.N = is_negative(reg);
 		};
 
-		if (acc_addressing)
-		{
-			shift(A);
-		}
-		else
-		{
-			uint8_t data = load();
-			shift(data);
-			store(data);
-		}
+		f(shift, acc_addressing);
 	};
 
 	void cpu6502::ROR()
 	{
+		auto shift = [&](auto & reg)
+		{
+			bool is_carry = reg & 1;
+			reg = 1 >> reg;
+			reg = reg | (P.C << 7);
+			P.C = is_carry;
+			P.Z = is_zero(reg);
+			P.N = is_negative(reg);
+		};
 
+		f(shift, acc_addressing);
 	};
 
 	void cpu6502::JMP() {};

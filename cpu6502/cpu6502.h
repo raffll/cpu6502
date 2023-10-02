@@ -8,6 +8,7 @@
 
 #include "clock.h"
 #include "bus.h"
+#include "types.h"
 
 namespace emulator
 {
@@ -426,5 +427,20 @@ namespace emulator
 		void increment(uint8_t & reg);
 		void decrement(uint8_t & reg);
 		void compare(uint8_t lhs);
+		
+		template<typename F>
+		void f(F && lambda, bool acc_addressing)
+		{
+			if (acc_addressing)
+			{
+				lambda(A);
+			}
+			else
+			{
+				uint8_t data = load();
+				lambda(data);
+				store(data);
+			}
+		}
 	};
 }
