@@ -319,12 +319,12 @@ namespace emulator
 
 	static uint8_t add_register(
 		uint8_t byte,
-		uint8_t reg,
+		uint8_t offset,
 		bool do_carry = false)
 	{
-		byte = (byte + reg) & 0xFF;
+		byte = (byte + offset) & 0xFF;
 		add_cycle = do_carry;
-		add_carry = do_carry && byte < reg;
+		add_carry = do_carry && byte < offset;
 		return byte;
 	}
 
@@ -349,7 +349,7 @@ namespace emulator
 		address = lo;
 	}
 
-	void cpu6502::zero_page(uint8_t reg)
+	void cpu6502::zero_page(uint8_t offset)
 	{
 		address = PC;
 		PC++;
@@ -357,7 +357,7 @@ namespace emulator
 		clock.cycle();
 
 		address = lo;
-		lo = add_register(lo, reg);
+		lo = add_register(lo, offset);
 		clock.cycle();
 
 		address = lo;
@@ -388,7 +388,7 @@ namespace emulator
 		address = (hi << 8) | lo;
 	}
 
-	void cpu6502::absolute(uint8_t reg)
+	void cpu6502::absolute(uint8_t offset)
 	{
 		address = PC;
 		PC++;
@@ -398,7 +398,7 @@ namespace emulator
 		address = PC;
 		PC++;
 		uint8_t hi = bus.read(address);
-		lo = add_register(lo, reg, true);
+		lo = add_register(lo, offset, true);
 		clock.cycle();
 
 		address = (hi << 8) | lo;
@@ -472,12 +472,12 @@ namespace emulator
 
 	static bool check_Z(uint8_t data)
 	{
-		return (data == 0);
+		return data == 0;
 	}
 
 	static bool check_N(uint8_t data)
 	{
-		return ((data & (1 << 7)) != 0);
+		return (data & (1 << 7)) != 0;
 	}
 
 	void cpu6502::LDA()
@@ -501,7 +501,7 @@ namespace emulator
 		P.N = check_N(Y);
 	}
 
-	void cpu6502::store(uint8_t & reg)
+	void cpu6502::store(uint8_t data)
 	{
 		if (add_carry)
 			address = address + 0x0100;
@@ -509,7 +509,7 @@ namespace emulator
 		if (add_cycle)
 			clock.cycle();
 
-		bus.write(address, reg);
+		bus.write(address, data);
 		clock.cycle();
 	}
 
@@ -528,7 +528,7 @@ namespace emulator
 		store(Y);
 	}
 
-	void cpu6502::transfer(uint8_t & src, uint8_t & dst)
+	void cpu6502::transfer(uint8_t src, uint8_t & dst)
 	{
 		address = PC;
 		clock.cycle();
@@ -675,13 +675,13 @@ namespace emulator
 		add_or_substract(data);
 	};
 
-	void cpu6502::compare(uint8_t & reg)
+	void cpu6502::compare(uint8_t lhs)
 	{
-		uint8_t data = load();
+		uint8_t rhs = load();
 
-		P.C = reg >= data;
-		P.Z = check_Z(reg - data);
-		P.N = check_N(reg - data);
+		P.C = lhs >= rhs;
+		P.Z = check_Z(lhs - rhs);
+		P.N = check_N(lhs - rhs);
 	}
 
 	void cpu6502::CMP()

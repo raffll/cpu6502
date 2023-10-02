@@ -415,16 +415,16 @@ namespace emulator
 		static const std::vector<instruction_t> instructions;
 
 	private:
-		void zero_page(uint8_t reg);
-		void absolute(uint8_t reg);
+		void zero_page(uint8_t offset);
+		void absolute(uint8_t offset);
 		auto load() -> uint8_t;
-		void store(uint8_t & reg);
-		void transfer(uint8_t & src, uint8_t & dst);
+		void store(uint8_t data);
+		void transfer(uint8_t src, uint8_t & dst);
 		void push(uint8_t data);
 		auto pull() -> uint8_t;
 		void add_or_substract(uint8_t data);
 		void increment(uint8_t & reg);
 		void decrement(uint8_t & reg);
-		void compare(uint8_t & reg);
+		void compare(uint8_t lhs);
 	};
 }
