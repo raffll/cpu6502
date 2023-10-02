@@ -620,24 +620,21 @@ namespace emulator
 
 	void cpu6502::AND()
 	{
-		uint8_t data = load();
-		A = A & data;
+		A = A & load();
 		P.Z = is_zero(A);
 		P.N = is_negative(A);
 	};
 
 	void cpu6502::EOR()
 	{
-		uint8_t data = load();
-		A = A ^ data;
+		A = A ^ load();
 		P.Z = is_zero(A);
 		P.N = is_negative(A);
 	};
 
 	void cpu6502::ORA()
 	{
-		uint8_t data = load();
-		A = A | data;
+		A = A | load();
 		P.Z = is_zero(A);
 		P.N = is_negative(A);
 	};
@@ -665,20 +662,17 @@ namespace emulator
 
 	void cpu6502::ADC()
 	{
-		uint8_t data = load();
-		add_or_substract(data);
+		add_or_substract(load());
 	};
 
 	void cpu6502::SBC()
 	{
-		uint8_t data = ~load();
-		add_or_substract(data);
+		add_or_substract(~load());
 	};
 
 	void cpu6502::compare(uint8_t lhs)
 	{
 		uint8_t rhs = load();
-
 		P.C = lhs >= rhs;
 		P.Z = is_zero(lhs - rhs);
 		P.N = is_negative(lhs - rhs);

@@ -146,7 +146,7 @@ namespace emulator
 
 		void ___() {};
 
-		enum oppcode : uint8_t
+		enum opcode : uint8_t
 		{
 			BRK____ = 0x00,
 			ORA_IDX = 0x01,
