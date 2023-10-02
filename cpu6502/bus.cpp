@@ -10,7 +10,7 @@ namespace emulator
 
 	void bus::reset()
 	{
-		std::fill(memory.begin(), memory.end(), 0x00_uint8_t);
+		std::fill(memory.begin(), memory.end(), 0x00_u8);
 	}
 
 	uint8_t bus::read(uint16_t address)

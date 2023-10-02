@@ -647,7 +647,7 @@ namespace emulator
 		uint8_t data = load();
 		P.Z = check_Z(A & data);
 		P.N = check_N(data);
-		P.V = ((data & (1 << 6)) != 0);
+		P.V = (data & (1 << 6)) != 0;
 	};
 
 	void cpu6502::add_or_substract(uint8_t data)
@@ -745,28 +745,78 @@ namespace emulator
 
 	void cpu6502::ASL()
 	{
+		auto shift = [&](auto & reg)
+		{
+			P.C = reg & (1 << 7);
+			reg = reg << 1;
+			check_Z(reg);
+			check_N(reg);
+		};
+
 		if (acc_addressing)
 		{
-			A = A << 1;
+			shift(A);
 		}
 		else
 		{
-			auto data = load();
-			data = data << 1;
+			uint8_t data = load();
+			shift(data);
 			store(data);
 		}
 	};
 
 	void cpu6502::LSR()
 	{
+		auto shift = [&](auto & reg)
+		{
+			P.C = reg & 1;
+			reg = 1 >> reg;
+			check_Z(reg);
+			check_N(reg);
+		};
 
+		if (acc_addressing)
+		{
+			shift(A);
+		}
+		else
+		{
+			uint8_t data = load();
+			shift(data);
+			store(data);
+		}
 	};
+
 	void cpu6502::ROL()
 	{
+		auto shift = [&](auto & reg)
+		{
+			bool bit7 = reg & (1 << 7);
+			reg = reg << 1;
+			reg = reg | P.C;
+			P.C = bit7;
+			check_Z(reg);
+			check_N(reg);
+		};
 
+		if (acc_addressing)
+		{
+			shift(A);
+		}
+		else
+		{
+			uint8_t data = load();
+			shift(data);
+			store(data);
+		}
 	};
+
 	void cpu6502::ROR()
 	{
 
 	};
+
+	void cpu6502::JMP() {};
+	void cpu6502::JSR() {};
+	void cpu6502::RTS() {};
 }

@@ -115,9 +115,9 @@ namespace emulator
 		void ROR();
 
 		// jumps & calls
-		void JMP() {};
-		void JSR() {};
-		void RTS() {};
+		void JMP();
+		void JSR();
+		void RTS();
 
 		// branches
 		void BCC() {};
