@@ -62,7 +62,7 @@ namespace emulator
 		uint8_t offset,
 		bool do_carry = false)
 	{
-		byte = (byte + offset) & 0xFF;
+		byte += offset;
 		add_cycle = do_carry;
 		add_carry = do_carry && byte < offset;
 		return byte;
@@ -170,7 +170,7 @@ namespace emulator
 		uint8_t lo = bus.read(address);
 		clock.cycle();
 
-		address = address + 1;
+		address = (p_hi << 8) | (p_lo + 1);
 		uint8_t hi = bus.read(address);
 		clock.cycle();
 
@@ -225,7 +225,7 @@ namespace emulator
 
 		if (add_carry)
 		{
-			address = address + 0x0100;
+			address += 0x0100;
 			data = bus.read(address);
 			clock.cycle();
 		}

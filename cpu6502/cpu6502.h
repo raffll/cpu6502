@@ -20,8 +20,6 @@ namespace emulator
 		i_clock & clock;
 		i_bus & bus;
 
-		using reg_t = uint8_t;
-
 		uint8_t A {};			// accumulator
 		uint8_t X {};			// x register
 		uint8_t Y {};			// y register
