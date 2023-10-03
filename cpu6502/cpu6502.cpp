@@ -158,15 +158,15 @@ namespace emulator
 	{
 		address = PC;
 		PC++;
-		uint8_t plo = bus.read(address);
+		uint8_t p_lo = bus.read(address);
 		clock.cycle();
 
 		address = PC;
 		PC++;
-		uint8_t phi = bus.read(address);
+		uint8_t p_hi = bus.read(address);
 		clock.cycle();
 
-		address = (phi << 8) | plo;
+		address = (p_hi << 8) | p_lo;
 		uint8_t lo = bus.read(address);
 		clock.cycle();
 
@@ -456,17 +456,27 @@ namespace emulator
 		compare(Y);
 	};
 
+	void cpu6502::INC()
+	{
+		uint8_t data = load();
+		clock.cycle();
+
+		data++;
+		clock.cycle();
+
+		bus.write(address, data);
+		clock.cycle();
+
+		P.Z = is_zero(data);
+		P.N = is_negative(data);
+	};
+
 	void cpu6502::increment(uint8_t & reg)
 	{
 		reg++;
 		P.Z = is_zero(reg);
 		P.N = is_negative(reg);
 	}
-
-	void cpu6502::INC()
-	{
-		increment(A);
-	};
 
 	void cpu6502::INX()
 	{
@@ -487,7 +497,17 @@ namespace emulator
 
 	void cpu6502::DEC()
 	{
-		decrement(A);
+		uint8_t data = load();
+		clock.cycle();
+
+		data--;
+		clock.cycle();
+
+		bus.write(address, data);
+		clock.cycle();
+
+		P.Z = is_zero(data);
+		P.N = is_negative(data);
 	};
 
 	void cpu6502::DEX()
