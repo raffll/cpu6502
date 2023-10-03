@@ -131,17 +131,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="bus.h" />
     <ClInclude Include="clock.h" />
     <ClInclude Include="cpu6502.h" />
     <ClInclude Include="i_bus.h" />
     <ClInclude Include="i_clock.h" />
+    <ClInclude Include="memory64k.h" />
     <ClInclude Include="types.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="bus.cpp" />
     <ClCompile Include="clock.cpp" />
     <ClCompile Include="cpu6502.cpp" />
+    <ClCompile Include="memory64k.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

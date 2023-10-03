@@ -6,8 +6,8 @@
 #include <string>
 #include <bit>
 
-#include "clock.h"
-#include "bus.h"
+#include "i_clock.h"
+#include "i_bus.h"
 #include "types.h"
 
 namespace emulator

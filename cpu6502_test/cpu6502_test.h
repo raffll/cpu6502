@@ -1,5 +1,7 @@
 #include "gtest/gtest.h"
 #include "../cpu6502/cpu6502.h"
+#include "../cpu6502/clock.h"
+#include "../cpu6502/memory64k.h"
 
 namespace emulator
 {
@@ -9,7 +11,7 @@ namespace emulator
 		using oc = emulator::cpu6502::opcode;
 
 		emulator::clock clock;
-		emulator::bus bus;
+		emulator::memory64k bus;
 		emulator::cpu6502 cpu { clock, bus };
 		uint16_t address = {};
 
@@ -100,6 +102,7 @@ namespace emulator
 		void logic(oc opcode, uint8_t a, uint8_t b);
 		void add(oc opcode);
 		void substract(oc opcode);
+		void compare(oc opcode, uint8_t & reg);
 	};
 
 	void cpu6502_test::load_IMM(oc opcode, uint8_t & reg)
@@ -500,7 +503,7 @@ namespace emulator
 		cpu.execute();
 
 		EXPECT_EQ(cpu.S, 0xFE);
-		EXPECT_EQ(bus.read(0x00FF), 0x0B);
+		EXPECT_EQ(bus.read(0x01FF), 0x0B);
 		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
 	}
 
@@ -513,7 +516,7 @@ namespace emulator
 		cpu.execute();
 
 		EXPECT_EQ(cpu.S, 0xFE);
-		EXPECT_EQ(bus.read(0x00FF), 0x80);
+		EXPECT_EQ(bus.read(0x01FF), 0x80);
 		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
 	}
 
@@ -522,7 +525,7 @@ namespace emulator
 		auto opcode = oc::PLA____;
 
 		bus.write(address++, opcode);
-		bus.write(0x00FF, 0x0C);
+		bus.write(0x01FF, 0x0C);
 		cpu.S = 0xFE;
 		cpu.execute();
 
@@ -536,7 +539,7 @@ namespace emulator
 		auto opcode = oc::PLP____;
 
 		bus.write(address++, opcode);
-		bus.write(0x00FF, 0x80);
+		bus.write(0x01FF, 0x80);
 		cpu.S = 0xFE;
 		cpu.execute();
 
@@ -864,7 +867,7 @@ namespace emulator
 		EXPECT_EQ(cpu.A, 0xFF);
 	}
 
-	TEST_F(cpu6502_test, ADC_IMM_flag_CZ)
+	TEST_F(cpu6502_test, ADC_IMM_flag_C_Z)
 	{
 		auto opcode = oc::ADC_IMM;
 
@@ -1012,7 +1015,7 @@ namespace emulator
 		add(opcode);
 	}
 
-	TEST_F(cpu6502_test, SBC_IMM_flag_CZ)
+	TEST_F(cpu6502_test, SBC_IMM_flag_C_Z)
 	{
 		auto opcode = oc::SBC_IMM;
 
@@ -1162,5 +1165,191 @@ namespace emulator
 		addressing_IDY(opcode, 0x80, 0x40);
 		bus.write(0x4080 + cpu.Y, 0x02);
 		substract(opcode);
+	}
+
+	void cpu6502_test::compare(oc opcode, uint8_t & reg)
+	{
+		reg = 0x05;
+		cpu.P.C = 0;
+		cpu.execute();
+
+		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
+	}
+
+	TEST_F(cpu6502_test, CMP_IMM)
+	{
+		auto opcode = oc::CMP_IMM;
+
+		addressing_IMM(opcode, 0x02);
+		compare(opcode, cpu.A);
+
+		EXPECT_EQ(cpu.P.C, 1);
+		EXPECT_EQ(cpu.P.Z, 0);
+		EXPECT_EQ(cpu.P.N, 0);
+		
+		addressing_IMM(opcode, 0x05);
+		cpu.execute();
+
+		EXPECT_EQ(cpu.P.C, 1);
+		EXPECT_EQ(cpu.P.Z, 1);
+		EXPECT_EQ(cpu.P.N, 0);
+
+		addressing_IMM(opcode, 0x07);
+		cpu.execute();
+
+		EXPECT_EQ(cpu.P.C, 0);
+		EXPECT_EQ(cpu.P.Z, 0);
+		EXPECT_EQ(cpu.P.N, 1);
+	}
+
+	TEST_F(cpu6502_test, CMP_ZPG)
+	{
+		auto opcode = oc::CMP_ZPG;
+
+		addressing_ZPG(opcode, 0x80);
+		bus.write(0x0080, 0x02);
+		compare(opcode, cpu.A);
+	}
+
+	TEST_F(cpu6502_test, CMP_ZPX)
+	{
+		auto opcode = oc::CMP_ZPX;
+
+		addressing_ZP(opcode, cpu.X, 0x80);
+		bus.write(0x0080 + cpu.X, 0x02);
+		compare(opcode, cpu.A);
+	}
+
+	TEST_F(cpu6502_test, CMP_ABS)
+	{
+		auto opcode = oc::CMP_ABS;
+
+		addressing_ABS(opcode, 0x80, 0x40);
+		bus.write(0x4080, 0x02);
+		compare(opcode, cpu.A);
+	}
+
+	TEST_F(cpu6502_test, CMP_ABX)
+	{
+		auto opcode = oc::CMP_ABX;
+
+		addressing_AB(opcode, cpu.X, 0x80, 0x40);
+		bus.write(0x4080 + cpu.X, 0x02);
+		compare(opcode, cpu.A);
+	}
+
+	TEST_F(cpu6502_test, CMP_ABY)
+	{
+		auto opcode = oc::CMP_ABY;
+
+		addressing_AB(opcode, cpu.Y, 0x80, 0x40);
+		bus.write(0x4080 + cpu.Y, 0x02);
+		compare(opcode, cpu.A);
+	}
+
+	TEST_F(cpu6502_test, CMP_IDX)
+	{
+		auto opcode = oc::CMP_IDX;
+
+		addressing_IDX(opcode, 0x80, 0x40);
+		bus.write(0x4080, 0x02);
+		compare(opcode, cpu.A);
+	}
+
+	TEST_F(cpu6502_test, CMP_IDY)
+	{
+		auto opcode = oc::CMP_IDY;
+
+		addressing_IDY(opcode, 0x80, 0x40);
+		bus.write(0x4080 + cpu.Y, 0x02);
+		compare(opcode, cpu.A);
+	}
+
+	TEST_F(cpu6502_test, CPX_IMM)
+	{
+		auto opcode = oc::CPX_IMM;
+
+		addressing_IMM(opcode, 0x02);
+		compare(opcode, cpu.X);
+
+		EXPECT_EQ(cpu.P.C, 1);
+		EXPECT_EQ(cpu.P.Z, 0);
+		EXPECT_EQ(cpu.P.N, 0);
+
+		addressing_IMM(opcode, 0x05);
+		cpu.execute();
+
+		EXPECT_EQ(cpu.P.C, 1);
+		EXPECT_EQ(cpu.P.Z, 1);
+		EXPECT_EQ(cpu.P.N, 0);
+
+		addressing_IMM(opcode, 0x07);
+		cpu.execute();
+
+		EXPECT_EQ(cpu.P.C, 0);
+		EXPECT_EQ(cpu.P.Z, 0);
+		EXPECT_EQ(cpu.P.N, 1);
+	}
+
+	TEST_F(cpu6502_test, CPX_ZPG)
+	{
+		auto opcode = oc::CPX_ZPG;
+
+		addressing_ZPG(opcode, 0x80);
+		bus.write(0x0080, 0x02);
+		compare(opcode, cpu.X);
+	}
+
+	TEST_F(cpu6502_test, CPX_ABS)
+	{
+		auto opcode = oc::CPX_ABS;
+
+		addressing_ABS(opcode, 0x80, 0x40);
+		bus.write(0x4080, 0x02);
+		compare(opcode, cpu.X);
+	}
+
+	TEST_F(cpu6502_test, CPY_IMM)
+	{
+		auto opcode = oc::CPY_IMM;
+
+		addressing_IMM(opcode, 0x02);
+		compare(opcode, cpu.Y);
+
+		EXPECT_EQ(cpu.P.C, 1);
+		EXPECT_EQ(cpu.P.Z, 0);
+		EXPECT_EQ(cpu.P.N, 0);
+
+		addressing_IMM(opcode, 0x05);
+		cpu.execute();
+
+		EXPECT_EQ(cpu.P.C, 1);
+		EXPECT_EQ(cpu.P.Z, 1);
+		EXPECT_EQ(cpu.P.N, 0);
+
+		addressing_IMM(opcode, 0x07);
+		cpu.execute();
+
+		EXPECT_EQ(cpu.P.C, 0);
+		EXPECT_EQ(cpu.P.Z, 0);
+		EXPECT_EQ(cpu.P.N, 1);
+	}
+
+	TEST_F(cpu6502_test, CPY_ZPG)
+	{
+		auto opcode = oc::CPY_ZPG;
+
+		addressing_ZPG(opcode, 0x80);
+		bus.write(0x0080, 0x02);
+		compare(opcode, cpu.Y);
+	}
+
+	TEST_F(cpu6502_test, CPY_ABS)
+	{
+		auto opcode = oc::CPY_ABS;
+
+		addressing_ABS(opcode, 0x80, 0x40);
+		bus.write(0x4080, 0x02);
+		compare(opcode, cpu.Y);
 	}
 }

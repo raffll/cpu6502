@@ -1,24 +1,21 @@
 #pragma once
 
-#include <vector>
-#include <cassert>
+#include <array>
 
 #include "i_bus.h"
 
 namespace emulator
 {
-	class bus : public i_bus
+	class memory64k : public i_bus
 	{
 	public:
-		bus(size_t size = 64 * 1024);
-
 		void reset() override;
 		uint8_t read(uint16_t address) override;
 		void write(uint16_t address, uint8_t byte) override;
 
-		~bus() override {}
+		~memory64k() override {}
 
 	private:
-		std::vector<uint8_t> memory;
+		std::array<uint8_t, 64 * 1024> memory;
 	};
 }

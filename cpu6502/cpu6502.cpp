@@ -339,7 +339,7 @@ namespace emulator
 		address = PC;
 		clock.cycle();
 
-		address = S;
+		address = 0x0100 + S;
 		bus.write(address, data);
 		S--;
 		clock.cycle();
@@ -360,11 +360,11 @@ namespace emulator
 		address = PC;
 		clock.cycle();
 
-		address = S;
+		address = 0x0100 + S;
 		S++;
 		clock.cycle();
 
-		address = S;
+		address = 0x0100 + S;
 		uint8_t data = bus.read(address);
 		clock.cycle();
 
@@ -563,7 +563,15 @@ namespace emulator
 
 	void cpu6502::JSR()
 	{
+		address = S;
+		bus.write(address, (PC >> 8) & 0xFF);
+		S--;
+		clock.cycle();
 
+		address = S;
+		bus.write(address, PC & 0xFF);
+		S--;
+		clock.cycle();
 	};
 
 	void cpu6502::RTS() {};
