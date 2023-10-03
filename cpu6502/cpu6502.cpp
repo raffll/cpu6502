@@ -2,266 +2,6 @@
 
 namespace emulator
 {
-	const std::vector<cpu6502::instruction_t> cpu6502::instructions
-	{
-		{ &cpu6502::BRK, &cpu6502::___, 7 },
-		{ &cpu6502::ORA, &cpu6502::IDX, 6 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::ORA, &cpu6502::ZPG, 3 },
-		{ &cpu6502::ASL, &cpu6502::ZPG, 5 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::PHP, &cpu6502::___, 3 },
-		{ &cpu6502::ORA, &cpu6502::IMM, 2 },
-		{ &cpu6502::ASL, &cpu6502::___, 2 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::ORA, &cpu6502::ABS, 4 },
-		{ &cpu6502::ASL, &cpu6502::ABS, 6 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::BPL, &cpu6502::REL, 2 },
-		{ &cpu6502::ORA, &cpu6502::IDY, 5 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::ORA, &cpu6502::ZPX, 4 },
-		{ &cpu6502::ASL, &cpu6502::ZPX, 6 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::CLC, &cpu6502::___, 2 },
-		{ &cpu6502::ORA, &cpu6502::ABY, 4 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::ORA, &cpu6502::ABX, 4 },
-		{ &cpu6502::ASL, &cpu6502::ABX, 7 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::JSR, &cpu6502::ABS, 6 },
-		{ &cpu6502::AND, &cpu6502::IDX, 6 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::BIT, &cpu6502::ZPG, 3 },
-		{ &cpu6502::AND, &cpu6502::ZPG, 3 },
-		{ &cpu6502::ROL, &cpu6502::ZPG, 5 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::PLP, &cpu6502::___, 4 },
-		{ &cpu6502::AND, &cpu6502::IMM, 2 },
-		{ &cpu6502::ROL, &cpu6502::___, 2 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::BIT, &cpu6502::ABS, 4 },
-		{ &cpu6502::AND, &cpu6502::ABS, 4 },
-		{ &cpu6502::ROL, &cpu6502::ABS, 6 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::BMI, &cpu6502::REL, 2 },
-		{ &cpu6502::AND, &cpu6502::IDY, 5 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::AND, &cpu6502::ZPX, 4 },
-		{ &cpu6502::ROL, &cpu6502::ZPX, 6 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::SEC, &cpu6502::___, 2 },
-		{ &cpu6502::AND, &cpu6502::ABY, 4 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::AND, &cpu6502::ABX, 4 },
-		{ &cpu6502::ROL, &cpu6502::ABX, 7 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::RTI, &cpu6502::___, 6 },
-		{ &cpu6502::EOR, &cpu6502::IDX, 6 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::EOR, &cpu6502::ZPG, 3 },
-		{ &cpu6502::LSR, &cpu6502::ZPG, 5 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::PHA, &cpu6502::___, 3 },
-		{ &cpu6502::EOR, &cpu6502::IMM, 2 },
-		{ &cpu6502::LSR, &cpu6502::___, 2 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::JMP, &cpu6502::ABS, 3 },
-		{ &cpu6502::EOR, &cpu6502::ABS, 4 },
-		{ &cpu6502::LSR, &cpu6502::ABS, 6 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::BVC, &cpu6502::REL, 2 },
-		{ &cpu6502::EOR, &cpu6502::IDY, 5 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::EOR, &cpu6502::ZPX, 4 },
-		{ &cpu6502::LSR, &cpu6502::ZPX, 6 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::CLI, &cpu6502::___, 2 },
-		{ &cpu6502::EOR, &cpu6502::ABY, 4 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::EOR, &cpu6502::ABX, 4 },
-		{ &cpu6502::LSR, &cpu6502::ABX, 7 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::RTS, &cpu6502::___, 6 },
-		{ &cpu6502::ADC, &cpu6502::IDX, 6 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::ADC, &cpu6502::ZPG, 3 },
-		{ &cpu6502::ROR, &cpu6502::ZPG, 5 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::PLA, &cpu6502::___, 4 },
-		{ &cpu6502::ADC, &cpu6502::IMM, 2 },
-		{ &cpu6502::ROR, &cpu6502::___, 2 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::JMP, &cpu6502::IND, 5 },
-		{ &cpu6502::ADC, &cpu6502::ABS, 4 },
-		{ &cpu6502::ROR, &cpu6502::ABS, 6 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::BVS, &cpu6502::REL, 2 },
-		{ &cpu6502::ADC, &cpu6502::IDY, 5 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::ADC, &cpu6502::ZPX, 4 },
-		{ &cpu6502::ROR, &cpu6502::ZPX, 6 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::SEI, &cpu6502::___, 2 },
-		{ &cpu6502::ADC, &cpu6502::ABY, 4 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::ADC, &cpu6502::ABX, 4 },
-		{ &cpu6502::ROR, &cpu6502::ABX, 7 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::STA, &cpu6502::IDX, 6 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::STY, &cpu6502::ZPG, 3 },
-		{ &cpu6502::STA, &cpu6502::ZPG, 3 },
-		{ &cpu6502::STX, &cpu6502::ZPG, 3 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::DEY, &cpu6502::___, 2 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::TXA, &cpu6502::___, 2 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::STY, &cpu6502::ABS, 4 },
-		{ &cpu6502::STA, &cpu6502::ABS, 4 },
-		{ &cpu6502::STX, &cpu6502::ABS, 4 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::BCC, &cpu6502::REL, 2 },
-		{ &cpu6502::STA, &cpu6502::IDY, 6 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::STY, &cpu6502::ZPX, 4 },
-		{ &cpu6502::STA, &cpu6502::ZPX, 4 },
-		{ &cpu6502::STX, &cpu6502::ZPY, 4 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::TYA, &cpu6502::___, 2 },
-		{ &cpu6502::STA, &cpu6502::ABY, 5 },
-		{ &cpu6502::TXS, &cpu6502::___, 2 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::STA, &cpu6502::ABX, 5 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::LDY, &cpu6502::IMM, 2 },
-		{ &cpu6502::LDA, &cpu6502::IDX, 6 },
-		{ &cpu6502::LDX, &cpu6502::IMM, 2 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::LDY, &cpu6502::ZPG, 3 },
-		{ &cpu6502::LDA, &cpu6502::ZPG, 3 },
-		{ &cpu6502::LDX, &cpu6502::ZPG, 3 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::TAY, &cpu6502::___, 2 },
-		{ &cpu6502::LDA, &cpu6502::IMM, 2 },
-		{ &cpu6502::TAX, &cpu6502::___, 2 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::LDY, &cpu6502::ABS, 4 },
-		{ &cpu6502::LDA, &cpu6502::ABS, 4 },
-		{ &cpu6502::LDX, &cpu6502::ABS, 4 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::BCS, &cpu6502::REL, 2 },
-		{ &cpu6502::LDA, &cpu6502::IDY, 5 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::LDY, &cpu6502::ZPX, 4 },
-		{ &cpu6502::LDA, &cpu6502::ZPX, 4 },
-		{ &cpu6502::LDX, &cpu6502::ZPY, 4 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::CLV, &cpu6502::___, 2 },
-		{ &cpu6502::LDA, &cpu6502::ABY, 4 },
-		{ &cpu6502::TSX, &cpu6502::___, 2 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::LDY, &cpu6502::ABX, 4 },
-		{ &cpu6502::LDA, &cpu6502::ABX, 4 },
-		{ &cpu6502::LDX, &cpu6502::ABY, 4 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::CPY, &cpu6502::IMM, 2 },
-		{ &cpu6502::CMP, &cpu6502::IDX, 6 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::CPY, &cpu6502::ZPG, 3 },
-		{ &cpu6502::CMP, &cpu6502::ZPG, 3 },
-		{ &cpu6502::DEC, &cpu6502::ZPG, 5 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::INY, &cpu6502::___, 2 },
-		{ &cpu6502::CMP, &cpu6502::IMM, 2 },
-		{ &cpu6502::DEX, &cpu6502::___, 2 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::CPY, &cpu6502::ABS, 4 },
-		{ &cpu6502::CMP, &cpu6502::ABS, 4 },
-		{ &cpu6502::DEC, &cpu6502::ABS, 6 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::BNE, &cpu6502::REL, 2 },
-		{ &cpu6502::CMP, &cpu6502::IDY, 5 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::CMP, &cpu6502::ZPX, 4 },
-		{ &cpu6502::DEC, &cpu6502::ZPX, 6 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::CLD, &cpu6502::___, 2 },
-		{ &cpu6502::CMP, &cpu6502::ABY, 4 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::CMP, &cpu6502::ABX, 4 },
-		{ &cpu6502::DEC, &cpu6502::ABX, 7 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::CPX, &cpu6502::IMM, 2 },
-		{ &cpu6502::SBC, &cpu6502::IDX, 6 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::CPX, &cpu6502::ZPG, 3 },
-		{ &cpu6502::SBC, &cpu6502::ZPG, 3 },
-		{ &cpu6502::INC, &cpu6502::ZPG, 5 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::INX, &cpu6502::___, 2 },
-		{ &cpu6502::SBC, &cpu6502::IMM, 2 },
-		{ &cpu6502::NOP, &cpu6502::___, 2 },
-		{ &cpu6502::SBC, &cpu6502::___, 2 },
-		{ &cpu6502::CPX, &cpu6502::ABS, 4 },
-		{ &cpu6502::SBC, &cpu6502::ABS, 4 },
-		{ &cpu6502::INC, &cpu6502::ABS, 6 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::BEQ, &cpu6502::REL, 2 },
-		{ &cpu6502::SBC, &cpu6502::IDY, 5 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::SBC, &cpu6502::ZPX, 4 },
-		{ &cpu6502::INC, &cpu6502::ZPX, 6 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::SED, &cpu6502::___, 2 },
-		{ &cpu6502::SBC, &cpu6502::ABY, 4 },
-		{ &cpu6502::___, &cpu6502::___, 2 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-		{ &cpu6502::SBC, &cpu6502::ABX, 4 },
-		{ &cpu6502::INC, &cpu6502::ABX, 7 },
-		{ &cpu6502::___, &cpu6502::___, 0 },
-	};
-
 	cpu6502::cpu6502(i_clock & clock, i_bus & bus)
 		: clock(clock)
 		, bus(bus)
@@ -412,6 +152,29 @@ namespace emulator
 	void cpu6502::ABY()
 	{
 		absolute(Y);
+	}
+
+	void cpu6502::IND()
+	{
+		address = PC;
+		PC++;
+		uint8_t plo = bus.read(address);
+		clock.cycle();
+
+		address = PC;
+		PC++;
+		uint8_t phi = bus.read(address);
+		clock.cycle();
+
+		address = (phi << 8) | plo;
+		uint8_t lo = bus.read(address);
+		clock.cycle();
+
+		address = address + 1;
+		uint8_t hi = bus.read(address);
+		clock.cycle();
+
+		address = (hi << 8) | lo;
 	}
 
 	void cpu6502::IDX()
@@ -739,7 +502,7 @@ namespace emulator
 
 	void cpu6502::ASL()
 	{
-		auto shift = [&](auto & reg)
+		auto lambda = [&](auto & reg)
 		{
 			P.C = reg & (1 << 7);
 			reg = reg << 1;
@@ -747,12 +510,12 @@ namespace emulator
 			P.N = is_negative(reg);
 		};
 
-		f(shift, acc_addressing);
+		shift(lambda, acc_addressing);
 	};
 
 	void cpu6502::LSR()
 	{
-		auto shift = [&](auto & reg)
+		auto lambda = [&](auto & reg)
 		{
 			P.C = reg & 1;
 			reg = 1 >> reg;
@@ -760,12 +523,12 @@ namespace emulator
 			P.N = is_negative(reg);
 		};
 
-		f(shift, acc_addressing);
+		shift(lambda, acc_addressing);
 	};
 
 	void cpu6502::ROL()
 	{
-		auto shift = [&](auto & reg)
+		auto lambda = [&](auto & reg)
 		{
 			bool is_carry = reg & (1 << 7);
 			reg = reg << 1;
@@ -775,12 +538,12 @@ namespace emulator
 			P.N = is_negative(reg);
 		};
 
-		f(shift, acc_addressing);
+		shift(lambda, acc_addressing);
 	};
 
 	void cpu6502::ROR()
 	{
-		auto shift = [&](auto & reg)
+		auto lambda = [&](auto & reg)
 		{
 			bool is_carry = reg & 1;
 			reg = 1 >> reg;
@@ -790,10 +553,18 @@ namespace emulator
 			P.N = is_negative(reg);
 		};
 
-		f(shift, acc_addressing);
+		shift(lambda, acc_addressing);
 	};
 
-	void cpu6502::JMP() {};
-	void cpu6502::JSR() {};
+	void cpu6502::JMP()
+	{
+		PC = address;
+	};
+
+	void cpu6502::JSR()
+	{
+
+	};
+
 	void cpu6502::RTS() {};
 }
