@@ -701,7 +701,7 @@ namespace emulator
 			}
 			else
 			{
-				uint8_t data = load();
+				uint8_t data = load(extra_cycle::always);
 				lambda(data);
 				store(data);
 			}
