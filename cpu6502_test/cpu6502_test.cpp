@@ -17,27 +17,33 @@ namespace emulator
 		bus.write(address++, data);
 	}
 
-	void cpu6502_test::addressing_ZPG(oc opcode, uint8_t lo)
+	uint16_t cpu6502_test::addressing_ZPG(oc opcode)
 	{
 		bus.write(address++, opcode);
-		bus.write(address++, lo);
+		bus.write(address++, 0x80);
+
+		return 0x80;
 	}
 
-	void cpu6502_test::addressing_ZP(oc opcode, uint8_t & offset_reg, uint8_t lo)
+	uint16_t cpu6502_test::addressing_ZP(oc opcode, uint8_t & offset_reg)
 	{
 		offset_reg = 0x0F;
 		bus.write(address++, opcode);
-		bus.write(address++, lo);
+		bus.write(address++, 0x80);
+
+		return 0x80 + offset_reg;
 	}
 
-	void cpu6502_test::addressing_ABS(oc opcode, uint8_t lo, uint8_t hi)
+	uint16_t cpu6502_test::addressing_ABS(oc opcode)
 	{
 		bus.write(address++, opcode);
-		bus.write(address++, lo);
-		bus.write(address++, hi);
+		bus.write(address++, 0x80);
+		bus.write(address++, 0x40);
+
+		return 0x4080;
 	}
 
-	void cpu6502_test::addressing_AB(oc opcode, uint8_t & offset_reg, uint8_t lo, uint8_t hi)
+	uint16_t cpu6502_test::addressing_AB(oc opcode, uint8_t & offset_reg)
 	{
 		if (carry)
 			offset_reg = 0xFF;
@@ -45,20 +51,24 @@ namespace emulator
 			offset_reg = 0x0F;
 
 		bus.write(address++, opcode);
-		bus.write(address++, lo);
-		bus.write(address++, hi);
+		bus.write(address++, 0x80);
+		bus.write(address++, 0x40);
+
+		return 0x4080 + offset_reg;
 	}
 
-	void cpu6502_test::addressing_IDX(oc opcode, uint8_t lo, uint8_t hi)
+	uint16_t cpu6502_test::addressing_IDX(oc opcode)
 	{
 		cpu.X = 0x0F;
 		bus.write(address++, opcode);
 		bus.write(address++, 0x20);
-		bus.write(0x002F, lo);
-		bus.write(0x0030, hi);
+		bus.write(0x002F, 0x80);
+		bus.write(0x0030, 0x40);
+
+		return 0x4080;
 	}
 
-	void cpu6502_test::addressing_IDY(oc opcode, uint8_t lo, uint8_t hi)
+	uint16_t cpu6502_test::addressing_IDY(oc opcode)
 	{
 		if (carry)
 			cpu.Y = 0xFF;
@@ -67,8 +77,10 @@ namespace emulator
 
 		bus.write(address++, opcode);
 		bus.write(address++, 0x20);
-		bus.write(0x0020, lo);
-		bus.write(0x0021, hi);
+		bus.write(0x0020, 0x80);
+		bus.write(0x0021, 0x40);
+
+		return 0x4080 + cpu.Y;
 	}
 
 	void cpu6502_test::load_IMM(oc opcode, uint8_t & reg)
@@ -107,8 +119,7 @@ namespace emulator
 
 	void cpu6502_test::load_ZPG(oc opcode, uint8_t & reg)
 	{
-		addressing_ZPG(opcode, 0x0A);
-		bus.write(0x000A, 0x0B);
+		bus.write(addressing_ZPG(opcode), 0x0B);
 		cpu.execute();
 
 		EXPECT_EQ(reg, 0x0B);
@@ -132,8 +143,7 @@ namespace emulator
 
 	void cpu6502_test::load_ZP(oc opcode, uint8_t & reg, uint8_t & offset_reg)
 	{
-		addressing_ZP(opcode, offset_reg, 0x80);
-		bus.write(0x0080 + offset_reg, 0x0C);
+		bus.write(addressing_ZP(opcode, offset_reg), 0x0C);
 		cpu.execute();
 
 		EXPECT_EQ(reg, 0x0C);
@@ -157,8 +167,7 @@ namespace emulator
 
 	void cpu6502_test::load_ABS(oc opcode, uint8_t & reg)
 	{
-		addressing_ABS(opcode, 0x80, 0x40);
-		bus.write(0x4080, 0x0D);
+		bus.write(addressing_ABS(opcode), 0x0D);
 		cpu.execute();
 
 		EXPECT_EQ(reg, 0x0D);
@@ -182,8 +191,7 @@ namespace emulator
 
 	void cpu6502_test::load_AB(oc opcode, uint8_t & reg, uint8_t & offset_reg)
 	{
-		addressing_AB(opcode, offset_reg, 0x80, 0x40);
-		bus.write(0x4080 + offset_reg, 0x0E);
+		bus.write(addressing_AB(opcode, offset_reg), 0x0E);
 		cpu.execute();
 
 		EXPECT_EQ(reg, 0x0E);
@@ -236,8 +244,7 @@ namespace emulator
 
 	void cpu6502_test::load_IDX(oc opcode, uint8_t & reg)
 	{
-		addressing_IDX(opcode, 0x80, 0x40);
-		bus.write(0x4080, 0x0A);
+		bus.write(addressing_IDX(opcode), 0x0A);
 		cpu.execute();
 
 		EXPECT_EQ(reg, 0x0A);
@@ -251,8 +258,7 @@ namespace emulator
 
 	void cpu6502_test::load_IDY(oc opcode, uint8_t & reg)
 	{
-		addressing_IDY(opcode, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x0B);
+		bus.write(addressing_IDY(opcode), 0x0B);
 		cpu.execute();
 
 		EXPECT_EQ(reg, 0x0B);
@@ -272,11 +278,11 @@ namespace emulator
 
 	void cpu6502_test::store_ZPG(oc opcode, uint8_t & reg)
 	{
-		addressing_ZPG(opcode, 0x0A);
+		auto addr = addressing_ZPG(opcode);
 		reg = 0x0B;
 		cpu.execute();
 
-		EXPECT_EQ(bus.read(0x000A), 0x0B);
+		EXPECT_EQ(bus.read(addr), 0x0B);
 		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
 	}
 
@@ -297,11 +303,11 @@ namespace emulator
 
 	void cpu6502_test::store_ZP(oc opcode, uint8_t & reg, uint8_t & offset_reg)
 	{
-		addressing_ZP(opcode, offset_reg, 0x80);
+		auto addr = addressing_ZP(opcode, offset_reg);
 		reg = 0x0C;
 		cpu.execute();
 
-		EXPECT_EQ(bus.read(0x0080 + offset_reg), 0x0C);
+		EXPECT_EQ(bus.read(addr), 0x0C);
 		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
 	}
 
@@ -322,11 +328,11 @@ namespace emulator
 
 	void cpu6502_test::store_ABS(oc opcode, uint8_t & reg)
 	{
-		addressing_ABS(opcode, 0x80, 0x40);
+		auto addr = addressing_ABS(opcode);
 		reg = 0x0D;
 		cpu.execute();
 
-		EXPECT_EQ(bus.read(0x4080), 0x0D);
+		EXPECT_EQ(bus.read(addr), 0x0D);
 		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
 	}
 
@@ -347,11 +353,11 @@ namespace emulator
 
 	void cpu6502_test::store_AB(oc opcode, uint8_t & reg, uint8_t & offset_reg)
 	{
-		addressing_AB(opcode, offset_reg, 0x80, 0x40);
+		auto addr = addressing_AB(opcode, offset_reg);
 		reg = 0x0E;
 		cpu.execute();
 
-		EXPECT_EQ(bus.read(0x4080 + offset_reg), 0x0E);
+		EXPECT_EQ(bus.read(addr), 0x0E);
 		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
 	}
 
@@ -379,11 +385,11 @@ namespace emulator
 
 	void cpu6502_test::store_IDX(oc opcode, uint8_t & reg)
 	{
-		addressing_IDX(opcode, 0x80, 0x40);
+		auto addr = addressing_IDX(opcode);
 		reg = 0x0A;
 		cpu.execute();
 
-		EXPECT_EQ(bus.read(0x4080), 0x0A);
+		EXPECT_EQ(bus.read(addr), 0x0A);
 		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
 	}
 
@@ -394,11 +400,11 @@ namespace emulator
 
 	void cpu6502_test::store_IDY(oc opcode, uint8_t & reg)
 	{
-		addressing_IDY(opcode, 0x80, 0x40);
+		auto addr = addressing_IDY(opcode);
 		reg = 0x0B;
 		cpu.execute();
 
-		EXPECT_EQ(bus.read(0x4080 + cpu.Y), 0x0B);
+		EXPECT_EQ(bus.read(addr), 0x0B);
 		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
 	}
 
@@ -533,10 +539,10 @@ namespace emulator
 
 	TEST_F(cpu6502_test, AND_IMM)
 	{
-		// 000000110 &
-		// 000000011
+		// 000000110 & 6
+		// 000000011   3
 		// ---------
-		// 000000010
+		// 000000010   2
 
 		auto opcode = oc::AND_IMM;
 
@@ -560,8 +566,7 @@ namespace emulator
 	{
 		auto opcode = oc::AND_ZPG;
 
-		addressing_ZPG(opcode, 0x80);
-		bus.write(0x0080, 0x06);
+		bus.write(addressing_ZPG(opcode), 0x06);
 		logic(opcode, 0x03, 0x02);
 	}
 
@@ -569,8 +574,7 @@ namespace emulator
 	{
 		auto opcode = oc::AND_ZPX;
 
-		addressing_ZP(opcode, cpu.X, 0x80);
-		bus.write(0x0080 + cpu.X, 0x06);
+		bus.write(addressing_ZP(opcode, cpu.X), 0x06);
 		logic(opcode, 0x03, 0x02);
 	}
 
@@ -578,8 +582,7 @@ namespace emulator
 	{
 		auto opcode = oc::AND_ABS;
 
-		addressing_ABS(opcode, 0x80, 0x40);
-		bus.write(0x4080, 0x06);
+		bus.write(addressing_ABS(opcode), 0x06);
 		logic(opcode, 0x03, 0x02);
 	}
 
@@ -587,8 +590,7 @@ namespace emulator
 	{
 		auto opcode = oc::AND_ABX;
 
-		addressing_AB(opcode, cpu.X, 0x80, 0x40);
-		bus.write(0x4080 + cpu.X, 0x06);
+		bus.write(addressing_AB(opcode, cpu.X), 0x06);
 		logic(opcode, 0x03, 0x02);
 	}
 
@@ -597,8 +599,7 @@ namespace emulator
 		auto opcode = oc::AND_ABX;
 
 		carry = true;
-		addressing_AB(opcode, cpu.X, 0x80, 0x40);
-		bus.write(0x4080 + cpu.X, 0x06);
+		bus.write(addressing_AB(opcode, cpu.X), 0x06);
 		logic(opcode, 0x03, 0x02);
 	}
 
@@ -606,8 +607,7 @@ namespace emulator
 	{
 		auto opcode = oc::AND_ABY;
 
-		addressing_AB(opcode, cpu.Y, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x06);
+		bus.write(addressing_AB(opcode, cpu.Y), 0x06);
 		logic(opcode, 0x03, 0x02);
 	}
 
@@ -616,8 +616,7 @@ namespace emulator
 		auto opcode = oc::AND_ABY;
 
 		carry = true;
-		addressing_AB(opcode, cpu.Y, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x06);
+		bus.write(addressing_AB(opcode, cpu.Y), 0x06);
 		logic(opcode, 0x03, 0x02);
 	}
 
@@ -625,8 +624,7 @@ namespace emulator
 	{
 		auto opcode = oc::AND_IDX;
 
-		addressing_IDX(opcode, 0x80, 0x40);
-		bus.write(0x4080, 0x06);
+		bus.write(addressing_IDX(opcode), 0x06);
 		logic(opcode, 0x03, 0x02);
 	}
 
@@ -634,8 +632,7 @@ namespace emulator
 	{
 		auto opcode = oc::AND_IDY;
 
-		addressing_IDY(opcode, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x06);
+		bus.write(addressing_IDY(opcode), 0x06);
 		logic(opcode, 0x03, 0x02);
 	}
 
@@ -644,8 +641,7 @@ namespace emulator
 		auto opcode = oc::AND_IDY;
 
 		carry = true;
-		addressing_IDY(opcode, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x06);
+		bus.write(addressing_IDY(opcode), 0x06);
 		logic(opcode, 0x03, 0x02);
 	}
 
@@ -678,8 +674,7 @@ namespace emulator
 	{
 		auto opcode = oc::EOR_ZPG;
 
-		addressing_ZPG(opcode, 0x80);
-		bus.write(0x0080, 0x06);
+		bus.write(addressing_ZPG(opcode), 0x06);
 		logic(opcode, 0x03, 0x05);
 	}
 
@@ -687,8 +682,7 @@ namespace emulator
 	{
 		auto opcode = oc::EOR_ZPX;
 
-		addressing_ZP(opcode, cpu.X, 0x80);
-		bus.write(0x0080 + cpu.X, 0x06);
+		bus.write(addressing_ZP(opcode, cpu.X), 0x06);
 		logic(opcode, 0x03, 0x05);
 	}
 
@@ -696,8 +690,7 @@ namespace emulator
 	{
 		auto opcode = oc::EOR_ABS;
 
-		addressing_ABS(opcode, 0x80, 0x40);
-		bus.write(0x4080, 0x06);
+		bus.write(addressing_ABS(opcode), 0x06);
 		logic(opcode, 0x03, 0x05);
 	}
 
@@ -705,8 +698,7 @@ namespace emulator
 	{
 		auto opcode = oc::EOR_ABX;
 
-		addressing_AB(opcode, cpu.X, 0x80, 0x40);
-		bus.write(0x4080 + cpu.X, 0x06);
+		bus.write(addressing_AB(opcode, cpu.X), 0x06);
 		logic(opcode, 0x03, 0x05);
 	}
 
@@ -715,8 +707,7 @@ namespace emulator
 		auto opcode = oc::EOR_ABX;
 
 		carry = true;
-		addressing_AB(opcode, cpu.X, 0x80, 0x40);
-		bus.write(0x4080 + cpu.X, 0x06);
+		bus.write(addressing_AB(opcode, cpu.X), 0x06);
 		logic(opcode, 0x03, 0x05);
 	}
 
@@ -724,8 +715,7 @@ namespace emulator
 	{
 		auto opcode = oc::EOR_ABY;
 
-		addressing_AB(opcode, cpu.Y, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x06);
+		bus.write(addressing_AB(opcode, cpu.Y), 0x06);
 		logic(opcode, 0x03, 0x05);
 	}
 
@@ -734,8 +724,7 @@ namespace emulator
 		auto opcode = oc::EOR_ABY;
 
 		carry = true;
-		addressing_AB(opcode, cpu.Y, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x06);
+		bus.write(addressing_AB(opcode, cpu.Y), 0x06);
 		logic(opcode, 0x03, 0x05);
 	}
 
@@ -743,8 +732,7 @@ namespace emulator
 	{
 		auto opcode = oc::EOR_IDX;
 
-		addressing_IDX(opcode, 0x80, 0x40);
-		bus.write(0x4080, 0x06);
+		bus.write(addressing_IDX(opcode), 0x06);
 		logic(opcode, 0x03, 0x05);
 	}
 
@@ -752,8 +740,7 @@ namespace emulator
 	{
 		auto opcode = oc::EOR_IDY;
 
-		addressing_IDY(opcode, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x06);
+		bus.write(addressing_IDY(opcode), 0x06);
 		logic(opcode, 0x03, 0x05);
 	}
 
@@ -762,8 +749,7 @@ namespace emulator
 		auto opcode = oc::EOR_IDY;
 
 		carry = true;
-		addressing_IDY(opcode, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x06);
+		bus.write(addressing_IDY(opcode), 0x06);
 		logic(opcode, 0x03, 0x05);
 	}
 
@@ -796,8 +782,7 @@ namespace emulator
 	{
 		auto opcode = oc::ORA_ZPG;
 
-		addressing_ZPG(opcode, 0x80);
-		bus.write(0x0080, 0x06);
+		bus.write(addressing_ZPG(opcode), 0x06);
 		logic(opcode, 0x03, 0x07);
 	}
 
@@ -805,8 +790,7 @@ namespace emulator
 	{
 		auto opcode = oc::ORA_ZPX;
 
-		addressing_ZP(opcode, cpu.X, 0x80);
-		bus.write(0x0080 + cpu.X, 0x06);
+		bus.write(addressing_ZP(opcode, cpu.X), 0x06);
 		logic(opcode, 0x03, 0x07);
 	}
 
@@ -814,8 +798,7 @@ namespace emulator
 	{
 		auto opcode = oc::ORA_ABS;
 
-		addressing_ABS(opcode, 0x80, 0x40);
-		bus.write(0x4080, 0x06);
+		bus.write(addressing_ABS(opcode), 0x06);
 		logic(opcode, 0x03, 0x07);
 	}
 
@@ -823,8 +806,7 @@ namespace emulator
 	{
 		auto opcode = oc::ORA_ABX;
 
-		addressing_AB(opcode, cpu.X, 0x80, 0x40);
-		bus.write(0x4080 + cpu.X, 0x06);
+		bus.write(addressing_AB(opcode, cpu.X), 0x06);
 		logic(opcode, 0x03, 0x07);
 	}
 
@@ -833,8 +815,7 @@ namespace emulator
 		auto opcode = oc::ORA_ABX;
 
 		carry = true;
-		addressing_AB(opcode, cpu.X, 0x80, 0x40);
-		bus.write(0x4080 + cpu.X, 0x06);
+		bus.write(addressing_AB(opcode, cpu.X), 0x06);
 		logic(opcode, 0x03, 0x07);
 	}
 
@@ -842,8 +823,7 @@ namespace emulator
 	{
 		auto opcode = oc::ORA_ABY;
 
-		addressing_AB(opcode, cpu.Y, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x06);
+		bus.write(addressing_AB(opcode, cpu.Y), 0x06);
 		logic(opcode, 0x03, 0x07);
 	}
 
@@ -852,8 +832,7 @@ namespace emulator
 		auto opcode = oc::ORA_ABY;
 
 		carry = true;
-		addressing_AB(opcode, cpu.Y, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x06);
+		bus.write(addressing_AB(opcode, cpu.Y), 0x06);
 		logic(opcode, 0x03, 0x07);
 	}
 
@@ -861,8 +840,7 @@ namespace emulator
 	{
 		auto opcode = oc::ORA_IDX;
 
-		addressing_IDX(opcode, 0x80, 0x40);
-		bus.write(0x4080, 0x06);
+		bus.write(addressing_IDX(opcode), 0x06);
 		logic(opcode, 0x03, 0x07);
 	}
 
@@ -870,8 +848,7 @@ namespace emulator
 	{
 		auto opcode = oc::ORA_IDY;
 
-		addressing_IDY(opcode, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x06);
+		bus.write(addressing_IDY(opcode), 0x06);
 		logic(opcode, 0x03, 0x07);
 	}
 
@@ -879,16 +856,14 @@ namespace emulator
 	{
 		auto opcode = oc::BIT_ZPG;
 
-		addressing_ZPG(opcode, 0x0A);
-		bus.write(0x000A, 0x00);
+		bus.write(addressing_ZPG(opcode), 0x00);
 		cpu.A = 0x00;
 		cpu.execute();
 
 		EXPECT_EQ(cpu.P.Z, 1);
 		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
 
-		addressing_ZPG(opcode, 0x0A);
-		bus.write(0x000A, 0xFE);
+		bus.write(addressing_ZPG(opcode), 0xFE);
 		cpu.A = 0xFF;
 		cpu.execute();
 
@@ -902,16 +877,14 @@ namespace emulator
 	{
 		auto opcode = oc::BIT_ABS;
 
-		addressing_ABS(opcode, 0x80, 0x40);
-		bus.write(0x4080, 0x00);
+		bus.write(addressing_ABS(opcode), 0x00);
 		cpu.A = 0x00;
 		cpu.execute();
 
 		EXPECT_EQ(cpu.P.Z, 1);
 		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
 
-		addressing_ABS(opcode, 0x80, 0x40);
-		bus.write(0x4080, 0xFE);
+		bus.write(addressing_ABS(opcode), 0xFE);
 		cpu.A = 0xFF;
 		cpu.execute();
 
@@ -1010,8 +983,7 @@ namespace emulator
 	{
 		auto opcode = oc::ADC_ZPG;
 
-		addressing_ZPG(opcode, 0x80);
-		bus.write(0x0080, 0x01);
+		bus.write(addressing_ZPG(opcode), 0x01);
 		add(opcode);
 	}
 
@@ -1019,8 +991,7 @@ namespace emulator
 	{
 		auto opcode = oc::ADC_ZPX;
 
-		addressing_ZP(opcode, cpu.X, 0x80);
-		bus.write(0x0080 + cpu.X, 0x01);
+		bus.write(addressing_ZP(opcode, cpu.X), 0x01);
 		add(opcode);
 	}
 
@@ -1028,8 +999,7 @@ namespace emulator
 	{
 		auto opcode = oc::ADC_ABS;
 
-		addressing_ABS(opcode, 0x80, 0x40);
-		bus.write(0x4080, 0x01);
+		bus.write(addressing_ABS(opcode), 0x01);
 		add(opcode);
 	}
 
@@ -1037,8 +1007,7 @@ namespace emulator
 	{
 		auto opcode = oc::ADC_ABX;
 
-		addressing_AB(opcode, cpu.X, 0x80, 0x40);
-		bus.write(0x4080 + cpu.X, 0x01);
+		bus.write(addressing_AB(opcode, cpu.X), 0x01);
 		add(opcode);
 	}
 
@@ -1047,8 +1016,7 @@ namespace emulator
 		auto opcode = oc::ADC_ABX;
 
 		carry = true;
-		addressing_AB(opcode, cpu.X, 0x80, 0x40);
-		bus.write(0x4080 + cpu.X, 0x01);
+		bus.write(addressing_AB(opcode, cpu.X), 0x01);
 		add(opcode);
 	}
 
@@ -1056,8 +1024,7 @@ namespace emulator
 	{
 		auto opcode = oc::ADC_ABY;
 
-		addressing_AB(opcode, cpu.Y, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x01);
+		bus.write(addressing_AB(opcode, cpu.Y), 0x01);
 		add(opcode);
 	}
 
@@ -1066,8 +1033,7 @@ namespace emulator
 		auto opcode = oc::ADC_ABY;
 
 		carry = true;
-		addressing_AB(opcode, cpu.Y, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x01);
+		bus.write(addressing_AB(opcode, cpu.Y), 0x01);
 		add(opcode);
 	}
 
@@ -1075,8 +1041,7 @@ namespace emulator
 	{
 		auto opcode = oc::ADC_IDX;
 
-		addressing_IDX(opcode, 0x80, 0x40);
-		bus.write(0x4080, 0x01);
+		bus.write(addressing_IDX(opcode), 0x01);
 		add(opcode);
 	}
 
@@ -1084,8 +1049,7 @@ namespace emulator
 	{
 		auto opcode = oc::ADC_IDY;
 
-		addressing_IDY(opcode, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x01);
+		bus.write(addressing_IDY(opcode), 0x01);
 		add(opcode);
 	}
 
@@ -1182,8 +1146,7 @@ namespace emulator
 	{
 		auto opcode = oc::SBC_ZPG;
 
-		addressing_ZPG(opcode, 0x80);
-		bus.write(0x0080, 0x02);
+		bus.write(addressing_ZPG(opcode), 0x02);
 		substract(opcode);
 	}
 
@@ -1191,8 +1154,7 @@ namespace emulator
 	{
 		auto opcode = oc::SBC_ZPX;
 
-		addressing_ZP(opcode, cpu.X, 0x80);
-		bus.write(0x0080 + cpu.X, 0x02);
+		bus.write(addressing_ZP(opcode, cpu.X), 0x02);
 		substract(opcode);
 	}
 
@@ -1200,8 +1162,7 @@ namespace emulator
 	{
 		auto opcode = oc::SBC_ABS;
 
-		addressing_ABS(opcode, 0x80, 0x40);
-		bus.write(0x4080, 0x02);
+		bus.write(addressing_ABS(opcode), 0x02);
 		substract(opcode);
 	}
 
@@ -1209,8 +1170,7 @@ namespace emulator
 	{
 		auto opcode = oc::SBC_ABX;
 
-		addressing_AB(opcode, cpu.X, 0x80, 0x40);
-		bus.write(0x4080 + cpu.X, 0x02);
+		bus.write(addressing_AB(opcode, cpu.X), 0x02);
 		substract(opcode);
 	}
 
@@ -1219,8 +1179,7 @@ namespace emulator
 		auto opcode = oc::SBC_ABX;
 
 		carry = true;
-		addressing_AB(opcode, cpu.X, 0x80, 0x40);
-		bus.write(0x4080 + cpu.X, 0x02);
+		bus.write(addressing_AB(opcode, cpu.X), 0x02);
 		substract(opcode);
 	}
 
@@ -1228,8 +1187,7 @@ namespace emulator
 	{
 		auto opcode = oc::SBC_ABY;
 
-		addressing_AB(opcode, cpu.Y, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x02);
+		bus.write(addressing_AB(opcode, cpu.Y), 0x02);
 		substract(opcode);
 	}
 
@@ -1238,8 +1196,7 @@ namespace emulator
 		auto opcode = oc::SBC_ABY;
 
 		carry = true;
-		addressing_AB(opcode, cpu.Y, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x02);
+		bus.write(addressing_AB(opcode, cpu.Y), 0x02);
 		substract(opcode);
 	}
 
@@ -1247,8 +1204,7 @@ namespace emulator
 	{
 		auto opcode = oc::SBC_IDX;
 
-		addressing_IDX(opcode, 0x80, 0x40);
-		bus.write(0x4080, 0x02);
+		bus.write(addressing_IDX(opcode), 0x02);
 		substract(opcode);
 	}
 
@@ -1256,8 +1212,7 @@ namespace emulator
 	{
 		auto opcode = oc::SBC_IDY;
 
-		addressing_IDY(opcode, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x02);
+		bus.write(addressing_IDY(opcode), 0x02);
 		substract(opcode);
 	}
 
@@ -1300,8 +1255,7 @@ namespace emulator
 	{
 		auto opcode = oc::CMP_ZPG;
 
-		addressing_ZPG(opcode, 0x80);
-		bus.write(0x0080, 0x02);
+		bus.write(addressing_ZPG(opcode), 0x02);
 		compare(opcode, cpu.A);
 	}
 
@@ -1309,8 +1263,7 @@ namespace emulator
 	{
 		auto opcode = oc::CMP_ZPX;
 
-		addressing_ZP(opcode, cpu.X, 0x80);
-		bus.write(0x0080 + cpu.X, 0x02);
+		bus.write(addressing_ZP(opcode, cpu.X), 0x02);
 		compare(opcode, cpu.A);
 	}
 
@@ -1318,8 +1271,7 @@ namespace emulator
 	{
 		auto opcode = oc::CMP_ABS;
 
-		addressing_ABS(opcode, 0x80, 0x40);
-		bus.write(0x4080, 0x02);
+		bus.write(addressing_ABS(opcode), 0x02);
 		compare(opcode, cpu.A);
 	}
 
@@ -1327,8 +1279,7 @@ namespace emulator
 	{
 		auto opcode = oc::CMP_ABX;
 
-		addressing_AB(opcode, cpu.X, 0x80, 0x40);
-		bus.write(0x4080 + cpu.X, 0x02);
+		bus.write(addressing_AB(opcode, cpu.X), 0x02);
 		compare(opcode, cpu.A);
 	}
 
@@ -1337,8 +1288,7 @@ namespace emulator
 		auto opcode = oc::CMP_ABX;
 
 		carry = true;
-		addressing_AB(opcode, cpu.X, 0x80, 0x40);
-		bus.write(0x4080 + cpu.X, 0x02);
+		bus.write(addressing_AB(opcode, cpu.X), 0x02);
 		compare(opcode, cpu.A);
 	}
 
@@ -1346,8 +1296,7 @@ namespace emulator
 	{
 		auto opcode = oc::CMP_ABY;
 
-		addressing_AB(opcode, cpu.Y, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x02);
+		bus.write(addressing_AB(opcode, cpu.Y), 0x02);
 		compare(opcode, cpu.A);
 	}
 
@@ -1356,8 +1305,7 @@ namespace emulator
 		auto opcode = oc::CMP_ABY;
 
 		carry = true;
-		addressing_AB(opcode, cpu.Y, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x02);
+		bus.write(addressing_AB(opcode, cpu.Y), 0x02);
 		compare(opcode, cpu.A);
 	}
 
@@ -1365,8 +1313,7 @@ namespace emulator
 	{
 		auto opcode = oc::CMP_IDX;
 
-		addressing_IDX(opcode, 0x80, 0x40);
-		bus.write(0x4080, 0x02);
+		bus.write(addressing_IDX(opcode), 0x02);
 		compare(opcode, cpu.A);
 	}
 
@@ -1374,8 +1321,7 @@ namespace emulator
 	{
 		auto opcode = oc::CMP_IDY;
 
-		addressing_IDY(opcode, 0x80, 0x40);
-		bus.write(0x4080 + cpu.Y, 0x02);
+		bus.write(addressing_IDY(opcode), 0x02);
 		compare(opcode, cpu.A);
 	}
 
@@ -1409,8 +1355,7 @@ namespace emulator
 	{
 		auto opcode = oc::CPX_ZPG;
 
-		addressing_ZPG(opcode, 0x80);
-		bus.write(0x0080, 0x02);
+		bus.write(addressing_ZPG(opcode), 0x02);
 		compare(opcode, cpu.X);
 	}
 
@@ -1418,8 +1363,7 @@ namespace emulator
 	{
 		auto opcode = oc::CPX_ABS;
 
-		addressing_ABS(opcode, 0x80, 0x40);
-		bus.write(0x4080, 0x02);
+		bus.write(addressing_ABS(opcode), 0x02);
 		compare(opcode, cpu.X);
 	}
 
@@ -1453,8 +1397,7 @@ namespace emulator
 	{
 		auto opcode = oc::CPY_ZPG;
 
-		addressing_ZPG(opcode, 0x80);
-		bus.write(0x0080, 0x02);
+		bus.write(addressing_ZPG(opcode), 0x02);
 		compare(opcode, cpu.Y);
 	}
 
@@ -1462,8 +1405,7 @@ namespace emulator
 	{
 		auto opcode = oc::CPY_ABS;
 
-		addressing_ABS(opcode, 0x80, 0x40);
-		bus.write(0x4080, 0x02);
+		bus.write(addressing_ABS(opcode), 0x02);
 		compare(opcode, cpu.Y);
 	}
 
@@ -1479,36 +1421,36 @@ namespace emulator
 	{
 		auto opcode = oc::INC_ZPG;
 
-		addressing_ZPG(opcode, 0x80);
-		bus.write(0x0080, 0x02);
-		increment(opcode, 0x0080);
+		auto addr = addressing_ZPG(opcode);
+		bus.write(addr, 0x02);
+		increment(opcode, addr);
 	}
 
 	TEST_F(cpu6502_test, INC_ZPX)
 	{
 		auto opcode = oc::INC_ZPX;
 
-		addressing_ZP(opcode, cpu.X, 0x80);
-		bus.write(0x0080 + cpu.X, 0x02);
-		increment(opcode, 0x0080 + cpu.X);
+		auto addr = addressing_ZP(opcode, cpu.X);
+		bus.write(addr, 0x02);
+		increment(opcode, addr);
 	}
 
 	TEST_F(cpu6502_test, INC_ABS)
 	{
 		auto opcode = oc::INC_ABS;
 
-		addressing_ABS(opcode, 0x80, 0x40);
-		bus.write(0x4080, 0x02);
-		increment(opcode, 0x4080);
+		auto addr = addressing_ABS(opcode);
+		bus.write(addr, 0x02);
+		increment(opcode, addr);
 	}
 
 	TEST_F(cpu6502_test, INC_ABX)
 	{
 		auto opcode = oc::INC_ABX;
 
-		addressing_AB(opcode, cpu.X, 0x80, 0x40);
-		bus.write(0x4080 + cpu.X, 0x02);
-		increment(opcode, 0x4080 + cpu.X);
+		auto addr = addressing_AB(opcode, cpu.X);
+		bus.write(addr, 0x02);
+		increment(opcode, addr);
 	}
 
 	TEST_F(cpu6502_test, INC_ABX_C)
@@ -1516,8 +1458,8 @@ namespace emulator
 		auto opcode = oc::INC_ABX;
 
 		carry = true;
-		addressing_AB(opcode, cpu.X, 0x80, 0x40);
-		bus.write(0x4080 + cpu.X, 0x02);
-		increment(opcode, 0x4080 + cpu.X);
+		auto addr = addressing_AB(opcode, cpu.X);
+		bus.write(addr, 0x02);
+		increment(opcode, addr);
 	}
 }

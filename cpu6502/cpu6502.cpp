@@ -218,34 +218,32 @@ namespace emulator
 		address = (hi << 8) | lo;
 	}
 
-	uint8_t cpu6502::load()
+	uint8_t cpu6502::load(extra_cycle e)
 	{
 		uint8_t data = bus.read(address);
 		clock.cycle();
 
-		if (add_carry)
+		if (e == extra_cycle::if_carry)
 		{
-			address += 0x0100;
-			data = bus.read(address);
-			clock.cycle();
+			if (add_carry)
+			{
+				address += 0x0100;
+				data = bus.read(address);
+				clock.cycle();
+			}
 		}
-
-		return data;
-	}
-
-	uint8_t cpu6502::load_force_cycle()
-	{
-		uint8_t data = bus.read(address);
-		clock.cycle();
-
-		if (add_carry)
+		
+		if (e == extra_cycle::always)
 		{
-			address += 0x0100;
-			data = bus.read(address);
-		}
+			if (add_carry)
+			{
+				address += 0x0100;
+				data = bus.read(address);
+			}
 
-		if (add_cycle)
-			clock.cycle();
+			if (add_cycle)
+				clock.cycle();
+		}
 
 		return data;
 	}
@@ -475,7 +473,7 @@ namespace emulator
 
 	void cpu6502::INC()
 	{
-		uint8_t data = load_force_cycle();
+		uint8_t data = load(extra_cycle::always);
 
 		data++;
 		clock.cycle();

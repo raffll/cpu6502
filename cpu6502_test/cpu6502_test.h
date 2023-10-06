@@ -19,12 +19,12 @@ namespace emulator
 		void SetUp() override;
 
 		void addressing_IMM(oc opcode, uint8_t data);
-		void addressing_ZPG(oc opcode, uint8_t lo);
-		void addressing_ZP(oc opcode, uint8_t & offset_reg, uint8_t lo);
-		void addressing_ABS(oc opcode, uint8_t lo, uint8_t hi);
-		void addressing_AB(oc opcode, uint8_t & offset_reg, uint8_t lo, uint8_t hi);
-		void addressing_IDX(oc opcode, uint8_t lo, uint8_t hi);
-		void addressing_IDY(oc opcode, uint8_t lo, uint8_t hi);
+		uint16_t addressing_ZPG(oc opcode);
+		uint16_t addressing_ZP(oc opcode, uint8_t & offset_reg);
+		uint16_t addressing_ABS(oc opcode);
+		uint16_t addressing_AB(oc opcode, uint8_t & offset_reg);
+		uint16_t addressing_IDX(oc opcode);
+		uint16_t addressing_IDY(oc opcode);
 
 		void load_IMM(oc opcode, uint8_t & reg);
 		void load_ZPG(oc opcode, uint8_t & reg);
