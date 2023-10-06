@@ -1462,4 +1462,106 @@ namespace emulator
 		bus.write(addr, 0x02);
 		increment(opcode, addr);
 	}
+
+	TEST_F(cpu6502_test, INX)
+	{
+		auto opcode = oc::INX____;
+
+		bus.write(address++, opcode);
+		cpu.X = 0x02;
+		cpu.execute();
+
+		EXPECT_EQ(cpu.X, 0x03);
+		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
+	}
+
+	TEST_F(cpu6502_test, INY)
+	{
+		auto opcode = oc::INY____;
+
+		bus.write(address++, opcode);
+		cpu.Y = 0x02;
+		cpu.execute();
+
+		EXPECT_EQ(cpu.Y, 0x03);
+		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
+	}
+
+	void cpu6502_test::decrement(oc opcode, uint16_t addr)
+	{
+		cpu.execute();
+
+		EXPECT_EQ(bus.read(addr), 0x01);
+		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
+	}
+
+	TEST_F(cpu6502_test, DEC_ZPG)
+	{
+		auto opcode = oc::DEC_ZPG;
+
+		auto addr = addressing_ZPG(opcode);
+		bus.write(addr, 0x02);
+		decrement(opcode, addr);
+	}
+
+	TEST_F(cpu6502_test, DEC_ZPX)
+	{
+		auto opcode = oc::DEC_ZPX;
+
+		auto addr = addressing_ZP(opcode, cpu.X);
+		bus.write(addr, 0x02);
+		decrement(opcode, addr);
+	}
+
+	TEST_F(cpu6502_test, DEC_ABS)
+	{
+		auto opcode = oc::DEC_ABS;
+
+		auto addr = addressing_ABS(opcode);
+		bus.write(addr, 0x02);
+		decrement(opcode, addr);
+	}
+
+	TEST_F(cpu6502_test, DEC_ABX)
+	{
+		auto opcode = oc::DEC_ABX;
+
+		auto addr = addressing_AB(opcode, cpu.X);
+		bus.write(addr, 0x02);
+		decrement(opcode, addr);
+	}
+
+	TEST_F(cpu6502_test, DEC_ABX_C)
+	{
+		auto opcode = oc::DEC_ABX;
+
+		carry = true;
+		auto addr = addressing_AB(opcode, cpu.X);
+		bus.write(addr, 0x02);
+		decrement(opcode, addr);
+	}
+
+	TEST_F(cpu6502_test, DEX)
+	{
+		auto opcode = oc::DEX____;
+
+		bus.write(address++, opcode);
+		cpu.X = 0x02;
+		cpu.execute();
+
+		EXPECT_EQ(cpu.X, 0x01);
+		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
+	}
+
+	TEST_F(cpu6502_test, DEY)
+	{
+		auto opcode = oc::DEY____;
+
+		bus.write(address++, opcode);
+		cpu.Y = 0x02;
+		cpu.execute();
+
+		EXPECT_EQ(cpu.Y, 0x01);
+		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
+	}
 }

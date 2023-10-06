@@ -47,5 +47,6 @@ namespace emulator
 		void substract(oc opcode);
 		void compare(oc opcode, uint8_t & reg);
 		void increment(oc opcode, uint16_t addr);
+		void decrement(oc opcode, uint16_t addr);
 	};
 }

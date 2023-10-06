@@ -16,6 +16,6 @@ namespace emulator
 		~memory64k() override {}
 
 	private:
-		std::array<uint8_t, 64 * 1024> memory;
+		std::array<uint8_t, 64 * 1024> memory = {};
 	};
 }

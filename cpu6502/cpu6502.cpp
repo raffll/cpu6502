@@ -488,6 +488,8 @@ namespace emulator
 	void cpu6502::increment(uint8_t & reg)
 	{
 		reg++;
+		clock.cycle();
+
 		P.Z = is_zero(reg);
 		P.N = is_negative(reg);
 	}
@@ -505,14 +507,15 @@ namespace emulator
 	void cpu6502::decrement(uint8_t & reg)
 	{
 		reg--;
+		clock.cycle();
+
 		P.Z = is_zero(reg);
 		P.N = is_negative(reg);
 	}
 
 	void cpu6502::DEC()
 	{
-		uint8_t data = load();
-		clock.cycle();
+		uint8_t data = load(extra_cycle::always);
 
 		data--;
 		clock.cycle();
