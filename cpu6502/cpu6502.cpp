@@ -233,6 +233,23 @@ namespace emulator
 		return data;
 	}
 
+	uint8_t cpu6502::load_force_cycle()
+	{
+		uint8_t data = bus.read(address);
+		clock.cycle();
+
+		if (add_carry)
+		{
+			address += 0x0100;
+			data = bus.read(address);
+		}
+
+		if (add_cycle)
+			clock.cycle();
+
+		return data;
+	}
+
 	static bool is_zero(uint8_t data)
 	{
 		return data == 0;
@@ -267,7 +284,7 @@ namespace emulator
 	void cpu6502::store(uint8_t data)
 	{
 		if (add_carry)
-			address = address + 0x0100;
+			address += 0x0100;
 
 		if (add_cycle)
 			clock.cycle();
@@ -458,8 +475,7 @@ namespace emulator
 
 	void cpu6502::INC()
 	{
-		uint8_t data = load();
-		clock.cycle();
+		uint8_t data = load_force_cycle();
 
 		data++;
 		clock.cycle();
@@ -522,7 +538,7 @@ namespace emulator
 
 	void cpu6502::ASL()
 	{
-		auto lambda = [&](auto & reg)
+		auto asl = [&](auto & reg)
 		{
 			P.C = reg & (1 << 7);
 			reg = reg << 1;
@@ -530,12 +546,12 @@ namespace emulator
 			P.N = is_negative(reg);
 		};
 
-		shift(lambda, acc_addressing);
+		shift(asl, acc_addressing);
 	};
 
 	void cpu6502::LSR()
 	{
-		auto lambda = [&](auto & reg)
+		auto lsr = [&](auto & reg)
 		{
 			P.C = reg & 1;
 			reg = 1 >> reg;
@@ -543,12 +559,12 @@ namespace emulator
 			P.N = is_negative(reg);
 		};
 
-		shift(lambda, acc_addressing);
+		shift(lsr, acc_addressing);
 	};
 
 	void cpu6502::ROL()
 	{
-		auto lambda = [&](auto & reg)
+		auto rol = [&](auto & reg)
 		{
 			bool is_carry = reg & (1 << 7);
 			reg = reg << 1;
@@ -558,12 +574,12 @@ namespace emulator
 			P.N = is_negative(reg);
 		};
 
-		shift(lambda, acc_addressing);
+		shift(rol, acc_addressing);
 	};
 
 	void cpu6502::ROR()
 	{
-		auto lambda = [&](auto & reg)
+		auto ror = [&](auto & reg)
 		{
 			bool is_carry = reg & 1;
 			reg = 1 >> reg;
@@ -573,7 +589,7 @@ namespace emulator
 			P.N = is_negative(reg);
 		};
 
-		shift(lambda, acc_addressing);
+		shift(ror, acc_addressing);
 	};
 
 	void cpu6502::JMP()
@@ -581,18 +597,31 @@ namespace emulator
 		PC = address;
 	};
 
+	static uint8_t lo_byte(uint16_t word)
+	{
+		return word & 0xFF;
+	}
+
+	static uint8_t hi_byte(uint16_t word)
+	{
+		return (word >> 8) & 0xFF;
+	}
+
 	void cpu6502::JSR()
 	{
 		address = S;
-		bus.write(address, (PC >> 8) & 0xFF);
+		bus.write(address, hi_byte(PC));
 		S--;
 		clock.cycle();
 
 		address = S;
-		bus.write(address, PC & 0xFF);
+		bus.write(address, lo_byte(PC));
 		S--;
 		clock.cycle();
 	};
 
-	void cpu6502::RTS() {};
+	void cpu6502::RTS()
+	{
+
+	};
 }

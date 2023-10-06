@@ -677,6 +677,7 @@ namespace emulator
 		void zero_page(uint8_t offset);
 		void absolute(uint8_t offset);
 		auto load() -> uint8_t;
+		auto load_force_cycle() -> uint8_t;
 		void store(uint8_t data);
 		void transfer(uint8_t src, uint8_t & dst);
 		void push(uint8_t data);
