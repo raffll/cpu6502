@@ -71,6 +71,7 @@ namespace emulator
 	void cpu6502::ACC()
 	{
 		acc_addressing = true;
+		clock.cycle();
 	}
 
 	void cpu6502::IMM()
@@ -232,7 +233,7 @@ namespace emulator
 				clock.cycle();
 			}
 		}
-		
+
 		if (e == extra_cycle::always)
 		{
 			if (add_carry)
@@ -258,6 +259,11 @@ namespace emulator
 		return (data & (1 << 7)) != 0;
 	}
 
+	static bool is_bit_set(uint8_t data, uint8_t bit)
+	{
+		return (data & (1 << bit)) != 0;
+	}
+
 	void cpu6502::LDA()
 	{
 		A = load();
@@ -279,12 +285,18 @@ namespace emulator
 		P.N = is_negative(Y);
 	}
 
-	void cpu6502::store(uint8_t data)
+	void cpu6502::store(uint8_t data, extra_cycle e)
 	{
-		if (add_carry)
-			address += 0x0100;
+		if (e == extra_cycle::read)
+		{
+			if (add_carry)
+				address += 0x0100;
 
-		if (add_cycle)
+			if (add_cycle)
+				clock.cycle();
+		}
+
+		if (e == extra_cycle::write)
 			clock.cycle();
 
 		bus.write(address, data);
@@ -541,8 +553,9 @@ namespace emulator
 	{
 		auto asl = [&](auto & reg)
 		{
-			P.C = reg & (1 << 7);
+			auto is_carry = is_bit_set(reg, 7);
 			reg = reg << 1;
+			P.C = is_carry;
 			P.Z = is_zero(reg);
 			P.N = is_negative(reg);
 		};
