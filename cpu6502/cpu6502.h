@@ -677,16 +677,14 @@ namespace emulator
 		enum class extra_cycle
 		{
 			if_carry,
-			always,
-
-			read,
-			write
+			if_carry_possible,
+			always
 		};
 
 		void zero_page(uint8_t offset);
 		void absolute(uint8_t offset);
 		auto load(extra_cycle e = extra_cycle::if_carry) -> uint8_t;
-		void store(uint8_t data, extra_cycle e = extra_cycle::read);
+		void store(uint8_t data, extra_cycle e = extra_cycle::if_carry_possible);
 		void transfer(uint8_t src, uint8_t & dst);
 		void push(uint8_t data);
 		auto pull() -> uint8_t;
@@ -696,17 +694,17 @@ namespace emulator
 		void compare(uint8_t lhs);
 
 		template<typename F>
-		void shift(F && lambda, bool acc_addressing)
+		void shift(F && f, bool acc_addressing)
 		{
 			if (acc_addressing)
 			{
-				lambda(A);
+				f(A);
 			}
 			else
 			{
-				uint8_t data = load(extra_cycle::always);
-				lambda(data);
-				store(data, extra_cycle::write);
+				uint8_t data = load(extra_cycle::if_carry_possible);
+				f(data);
+				store(data, extra_cycle::always);
 			}
 		}
 	};

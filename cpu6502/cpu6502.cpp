@@ -233,8 +233,7 @@ namespace emulator
 				clock.cycle();
 			}
 		}
-
-		if (e == extra_cycle::always)
+		else if (e == extra_cycle::if_carry_possible)
 		{
 			if (add_carry)
 			{
@@ -244,6 +243,10 @@ namespace emulator
 
 			if (add_cycle)
 				clock.cycle();
+		}
+		else
+		{
+			throw std::exception("");
 		}
 
 		return data;
@@ -287,7 +290,7 @@ namespace emulator
 
 	void cpu6502::store(uint8_t data, extra_cycle e)
 	{
-		if (e == extra_cycle::read)
+		if (e == extra_cycle::if_carry_possible)
 		{
 			if (add_carry)
 				address += 0x0100;
@@ -295,9 +298,14 @@ namespace emulator
 			if (add_cycle)
 				clock.cycle();
 		}
-
-		if (e == extra_cycle::write)
+		else if (e == extra_cycle::always)
+		{
 			clock.cycle();
+		}
+		else
+		{
+			throw std::exception("");
+		}
 
 		bus.write(address, data);
 		clock.cycle();
@@ -485,7 +493,7 @@ namespace emulator
 
 	void cpu6502::INC()
 	{
-		uint8_t data = load(extra_cycle::always);
+		uint8_t data = load(extra_cycle::if_carry_possible);
 
 		data++;
 		clock.cycle();
@@ -527,7 +535,7 @@ namespace emulator
 
 	void cpu6502::DEC()
 	{
-		uint8_t data = load(extra_cycle::always);
+		uint8_t data = load(extra_cycle::if_carry_possible);
 
 		data--;
 		clock.cycle();
@@ -581,7 +589,7 @@ namespace emulator
 	{
 		auto rol = [&](auto & reg)
 		{
-			bool is_carry = reg & (1 << 7);
+			auto is_carry = is_bit_set(reg, 7);
 			reg = reg << 1;
 			reg = reg | P.C;
 			P.C = is_carry;
@@ -596,8 +604,8 @@ namespace emulator
 	{
 		auto ror = [&](auto & reg)
 		{
-			bool is_carry = reg & 1;
-			reg = 1 >> reg;
+			auto is_carry = is_bit_set(reg, 0);
+			reg = reg >> 1;
 			reg = reg | (P.C << 7);
 			P.C = is_carry;
 			P.Z = is_zero(reg);

@@ -50,5 +50,7 @@ namespace emulator
 		void decrement(oc opcode, uint16_t addr);
 		void asl(oc opcode, uint16_t addr);
 		void lsr(oc opcode, uint16_t addr);
+		void rol(oc opcode, uint16_t addr);
+		void ror(oc opcode, uint16_t addr);
 	};
 }
