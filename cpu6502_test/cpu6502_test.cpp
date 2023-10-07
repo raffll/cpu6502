@@ -1567,10 +1567,6 @@ namespace emulator
 
 	TEST_F(cpu6502_test, ASL_ACC)
 	{
-		// 10000001 <<
-		// ---------
-		// 00000010 and C = 1
-
 		auto opcode = oc::ASL_ACC;
 
 		bus.write(address++, opcode);
@@ -1803,5 +1799,89 @@ namespace emulator
 		auto addr = addressing_AB(opcode, cpu.X);
 		bus.write(addr, 0b00000001);
 		rol(opcode, addr);
+	}
+
+	TEST_F(cpu6502_test, ROR_ACC)
+	{
+		auto opcode = oc::ROR_ACC;
+
+		bus.write(address++, opcode);
+		cpu.A = 0b10000000;
+		cpu.P.C = 1;
+		cpu.execute();
+
+		EXPECT_EQ(cpu.A, 0b11000000);
+		EXPECT_EQ(cpu.P.C, 0);
+		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
+
+		bus.write(address++, opcode);
+		cpu.A = 0b00000001;
+		cpu.P.C = 0;
+		cpu.execute();
+
+		EXPECT_EQ(cpu.P.Z, 1);
+
+		bus.write(address++, opcode);
+		cpu.A = 0b00000000;
+		cpu.P.C = 1;
+		cpu.execute();
+
+		EXPECT_EQ(cpu.P.N, 1);
+	}
+
+	void cpu6502_test::ror(oc opcode, uint16_t addr)
+	{
+		cpu.P.C = 1;
+		cpu.execute();
+
+		EXPECT_EQ(bus.read(addr), 0b11000000);
+		EXPECT_EQ(cpu.P.C, 0);
+		EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
+	}
+
+	TEST_F(cpu6502_test, ROR_ZPG)
+	{
+		auto opcode = oc::ROR_ZPG;
+
+		auto addr = addressing_ZPG(opcode);
+		bus.write(addr, 0b10000000);
+		ror(opcode, addr);
+	}
+
+	TEST_F(cpu6502_test, ROR_ZPX)
+	{
+		auto opcode = oc::ROR_ZPX;
+
+		auto addr = addressing_ZP(opcode, cpu.X);
+		bus.write(addr, 0b10000000);
+		ror(opcode, addr);
+	}
+
+	TEST_F(cpu6502_test, ROR_ABS)
+	{
+		auto opcode = oc::ROR_ABS;
+
+		auto addr = addressing_ABS(opcode);
+		bus.write(addr, 0b10000000);
+		ror(opcode, addr);
+	}
+
+	TEST_F(cpu6502_test, ROR_ABX)
+	{
+		auto opcode = oc::ROR_ABX;
+
+		auto addr = addressing_AB(opcode, cpu.X);
+		bus.write(addr, 0b10000000);
+		ror(opcode, addr);
+	}
+
+	TEST_F(cpu6502_test, ROR_ABX_C)
+	{
+		auto opcode = oc::ROR_ABX;
+
+		carry = true;
+		auto addr = addressing_AB(opcode, cpu.X);
+		bus.write(addr, 0b10000000);
+		ror(opcode, addr);
 	}
 }
