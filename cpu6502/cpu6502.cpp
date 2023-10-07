@@ -567,8 +567,9 @@ namespace emulator
 	{
 		auto lsr = [&](auto & reg)
 		{
-			P.C = reg & 1;
-			reg = 1 >> reg;
+			auto is_carry = is_bit_set(reg, 0);
+			reg = reg >> 1;
+			P.C = is_carry;
 			P.Z = is_zero(reg);
 			P.N = is_negative(reg);
 		};
