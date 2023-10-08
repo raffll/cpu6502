@@ -71,6 +71,13 @@ namespace emulator
 	void cpu6502::ACC()
 	{
 		acc_addressing = true;
+		address = PC;
+		clock.cycle();
+	}
+
+	void cpu6502::IMP()
+	{
+		address = PC;
 		clock.cycle();
 	}
 
@@ -114,6 +121,11 @@ namespace emulator
 		zero_page(Y);
 	}
 
+	void cpu6502::REL()
+	{
+
+	}
+
 	void cpu6502::ABS()
 	{
 		address = PC;
@@ -138,8 +150,8 @@ namespace emulator
 
 		address = PC;
 		PC++;
-		uint8_t hi = bus.read(address);
 		lo = add_register(lo, offset, true);
+		uint8_t hi = bus.read(address);
 		clock.cycle();
 
 		address = (hi << 8) | lo;
@@ -212,8 +224,8 @@ namespace emulator
 		clock.cycle();
 
 		address = ptr + 1;
-		uint8_t hi = bus.read(address);
 		lo = add_register(lo, Y, true);
+		uint8_t hi = bus.read(address);
 		clock.cycle();
 
 		address = (hi << 8) | lo;
@@ -265,6 +277,21 @@ namespace emulator
 	static bool is_bit_set(uint8_t data, uint8_t bit)
 	{
 		return (data & (1 << bit)) != 0;
+	}
+
+	static uint8_t lo_byte(uint16_t word)
+	{
+		return word & 0xFF;
+	}
+
+	static uint8_t hi_byte(uint16_t word)
+	{
+		return (word >> 8) & 0xFF;
+	}
+
+	static uint16_t stack_address(uint8_t S)
+	{
+		return 0x0100 + S;
 	}
 
 	void cpu6502::LDA()
@@ -328,9 +355,6 @@ namespace emulator
 
 	void cpu6502::transfer(uint8_t src, uint8_t & dst)
 	{
-		address = PC;
-		clock.cycle();
-
 		dst = src;
 		P.Z = is_zero(dst);
 		P.N = is_negative(dst);
@@ -363,9 +387,6 @@ namespace emulator
 
 	void cpu6502::TXS()
 	{
-		address = PC;
-		clock.cycle();
-
 		S = X;
 	};
 
@@ -374,9 +395,9 @@ namespace emulator
 		address = PC;
 		clock.cycle();
 
-		address = 0x0100 + S;
-		bus.write(address, data);
+		address = stack_address(S);
 		S--;
+		bus.write(address, data);
 		clock.cycle();
 	}
 
@@ -395,11 +416,11 @@ namespace emulator
 		address = PC;
 		clock.cycle();
 
-		address = 0x0100 + S;
+		address = stack_address(S);
 		S++;
 		clock.cycle();
 
-		address = 0x0100 + S;
+		address = stack_address(S);
 		uint8_t data = bus.read(address);
 		clock.cycle();
 
@@ -508,8 +529,6 @@ namespace emulator
 	void cpu6502::increment(uint8_t & reg)
 	{
 		reg++;
-		clock.cycle();
-
 		P.Z = is_zero(reg);
 		P.N = is_negative(reg);
 	}
@@ -527,8 +546,6 @@ namespace emulator
 	void cpu6502::decrement(uint8_t & reg)
 	{
 		reg--;
-		clock.cycle();
-
 		P.Z = is_zero(reg);
 		P.N = is_negative(reg);
 	}
@@ -620,31 +637,142 @@ namespace emulator
 		PC = address;
 	};
 
-	static uint8_t lo_byte(uint16_t word)
-	{
-		return word & 0xFF;
-	}
-
-	static uint8_t hi_byte(uint16_t word)
-	{
-		return (word >> 8) & 0xFF;
-	}
-
 	void cpu6502::JSR()
 	{
-		address = S;
-		bus.write(address, hi_byte(PC));
-		S--;
+		address = stack_address(S);
 		clock.cycle();
 
-		address = S;
-		bus.write(address, lo_byte(PC));
+		address = stack_address(S);
 		S--;
+		bus.write(address, hi_byte(PC));
+		clock.cycle();
+
+		address = stack_address(S);
+		S--;
+		bus.write(address, lo_byte(PC));
 		clock.cycle();
 	};
 
 	void cpu6502::RTS()
 	{
+		address = PC;
+		clock.cycle();
 
+		address = stack_address(S);
+		S++;
+		clock.cycle();
+
+		address = stack_address(S);
+		S++;
+		uint8_t lo = bus.read(address);
+		clock.cycle();
+
+		address = stack_address(S);
+		uint8_t hi = bus.read(address);
+		clock.cycle();
+
+		address = (hi << 8) | lo;
+		PC++;
+		clock.cycle();
 	};
+
+	void cpu6502::branch(bool is_branch)
+	{
+		address = PC;
+		PC++;
+		int8_t offset = bus.read(address);
+		clock.cycle();
+
+		if (is_branch)
+		{
+			address = PC;
+			PC += offset;
+			clock.cycle();
+
+			if (lo_byte(PC) < offset)
+			{
+				address = PC;
+				clock.cycle();
+			}
+		}
+	}
+
+	void cpu6502::BCC()
+	{
+		branch(!P.C);
+	};
+
+	void cpu6502::BCS()
+	{
+		branch(P.C);
+	};
+
+	void cpu6502::BNE()
+	{
+		branch(!P.Z);
+	};
+
+	void cpu6502::BEQ()
+	{
+		branch(P.Z);
+	};
+
+	void cpu6502::BPL()
+	{
+		branch(!P.N);
+	};
+
+	void cpu6502::BMI()
+	{
+		branch(P.N);
+	};
+
+	void cpu6502::BVC()
+	{
+		branch(!P.V);
+	};
+
+	void cpu6502::BVS()
+	{
+		branch(P.V);
+	};
+
+	void cpu6502::CLC()
+	{
+		P.C = 0;
+	};
+
+	void cpu6502::CLD()
+	{
+		P.D = 0;
+	};
+
+	void cpu6502::CLI()
+	{
+		P.I = 0;
+	};
+
+	void cpu6502::CLV()
+	{
+		P.V = 0;
+	};
+
+	void cpu6502::SEC()
+	{
+		P.C = 1;
+	};
+
+	void cpu6502::SED()
+	{
+		P.D = 1;
+	};
+
+	void cpu6502::SEI()
+	{
+		P.I = 1;
+	};
+
+	void cpu6502::BRK() {};
+	void cpu6502::NOP() {};
+	void cpu6502::RTI() {};
 }

@@ -51,11 +51,12 @@ namespace emulator
 	private:
 		// adressing modes
 		void ACC();				// accumulator
+		void IMP();				// implied
 		void IMM();				// immediate
 		void ZPG();				// zero page
 		void ZPX();				// zero page, X
 		void ZPY();				// zero page, Y
-		void REL() {};			// relative
+		void REL();				// relative
 		void ABS();				// absolute
 		void ABX();				// absolute, X
 		void ABY();				// absolute, Y
@@ -121,28 +122,28 @@ namespace emulator
 		void RTS();
 
 		// branches
-		void BCC() {};
-		void BCS() {};
-		void BEQ() {};
-		void BMI() {};
-		void BNE() {};
-		void BPL() {};
-		void BVC() {};
-		void BVS() {};
+		void BCC();
+		void BCS();
+		void BNE();
+		void BEQ();
+		void BPL();
+		void BMI();
+		void BVC();
+		void BVS();
 
 		// status flag changes
-		void CLC() {};
-		void CLD() {};
-		void CLI() {};
-		void CLV() {};
-		void SEC() {};
-		void SED() {};
-		void SEI() {};
+		void CLC();
+		void CLD();
+		void CLI();
+		void CLV();
+		void SEC();
+		void SED();
+		void SEI();
 
 		// system functions
-		void BRK() {};
-		void NOP() {};
-		void RTI() {};
+		void BRK();
+		void NOP();
+		void RTI();
 
 		void ___() {};
 
@@ -439,7 +440,7 @@ namespace emulator
 			{ &cpu6502::ORA, &cpu6502::ZPX, 4 }, // 0x15
 			{ &cpu6502::ASL, &cpu6502::ZPX, 6 }, // 0x16
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x17
-			{ &cpu6502::CLC, &cpu6502::___, 2 }, // 0x18
+			{ &cpu6502::CLC, &cpu6502::IMP, 2 }, // 0x18
 			{ &cpu6502::ORA, &cpu6502::ABY, 4 }, // 0x19
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x1A
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x1B
@@ -471,7 +472,7 @@ namespace emulator
 			{ &cpu6502::AND, &cpu6502::ZPX, 4 }, // 0x35
 			{ &cpu6502::ROL, &cpu6502::ZPX, 6 }, // 0x36
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x37
-			{ &cpu6502::SEC, &cpu6502::___, 2 }, // 0x38
+			{ &cpu6502::SEC, &cpu6502::IMP, 2 }, // 0x38
 			{ &cpu6502::AND, &cpu6502::ABY, 4 }, // 0x39
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x3A
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x3B
@@ -503,7 +504,7 @@ namespace emulator
 			{ &cpu6502::EOR, &cpu6502::ZPX, 4 }, // 0x55
 			{ &cpu6502::LSR, &cpu6502::ZPX, 6 }, // 0x56
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x57
-			{ &cpu6502::CLI, &cpu6502::___, 2 }, // 0x58
+			{ &cpu6502::CLI, &cpu6502::IMP, 2 }, // 0x58
 			{ &cpu6502::EOR, &cpu6502::ABY, 4 }, // 0x59
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x5A
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x5B
@@ -535,7 +536,7 @@ namespace emulator
 			{ &cpu6502::ADC, &cpu6502::ZPX, 4 }, // 0x75
 			{ &cpu6502::ROR, &cpu6502::ZPX, 6 }, // 0x76
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x77
-			{ &cpu6502::SEI, &cpu6502::___, 2 }, // 0x78
+			{ &cpu6502::SEI, &cpu6502::IMP, 2 }, // 0x78
 			{ &cpu6502::ADC, &cpu6502::ABY, 4 }, // 0x79
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x7A
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x7B
@@ -551,9 +552,9 @@ namespace emulator
 			{ &cpu6502::STA, &cpu6502::ZPG, 3 }, // 0x85
 			{ &cpu6502::STX, &cpu6502::ZPG, 3 }, // 0x86
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x87
-			{ &cpu6502::DEY, &cpu6502::___, 2 }, // 0x88
+			{ &cpu6502::DEY, &cpu6502::IMP, 2 }, // 0x88
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x89
-			{ &cpu6502::TXA, &cpu6502::___, 2 }, // 0x8A
+			{ &cpu6502::TXA, &cpu6502::IMP, 2 }, // 0x8A
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x8B
 			{ &cpu6502::STY, &cpu6502::ABS, 4 }, // 0x8C
 			{ &cpu6502::STA, &cpu6502::ABS, 4 }, // 0x8D
@@ -567,9 +568,9 @@ namespace emulator
 			{ &cpu6502::STA, &cpu6502::ZPX, 4 }, // 0x95
 			{ &cpu6502::STX, &cpu6502::ZPY, 4 }, // 0x96
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x97
-			{ &cpu6502::TYA, &cpu6502::___, 2 }, // 0x98
+			{ &cpu6502::TYA, &cpu6502::IMP, 2 }, // 0x98
 			{ &cpu6502::STA, &cpu6502::ABY, 5 }, // 0x99
-			{ &cpu6502::TXS, &cpu6502::___, 2 }, // 0x9A
+			{ &cpu6502::TXS, &cpu6502::IMP, 2 }, // 0x9A
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x9B
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x9C
 			{ &cpu6502::STA, &cpu6502::ABX, 5 }, // 0x9D
@@ -583,9 +584,9 @@ namespace emulator
 			{ &cpu6502::LDA, &cpu6502::ZPG, 3 }, // 0xA5
 			{ &cpu6502::LDX, &cpu6502::ZPG, 3 }, // 0xA6
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0xA7
-			{ &cpu6502::TAY, &cpu6502::___, 2 }, // 0xA8
+			{ &cpu6502::TAY, &cpu6502::IMP, 2 }, // 0xA8
 			{ &cpu6502::LDA, &cpu6502::IMM, 2 }, // 0xA9
-			{ &cpu6502::TAX, &cpu6502::___, 2 }, // 0xAA
+			{ &cpu6502::TAX, &cpu6502::IMP, 2 }, // 0xAA
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0xAB
 			{ &cpu6502::LDY, &cpu6502::ABS, 4 }, // 0xAC
 			{ &cpu6502::LDA, &cpu6502::ABS, 4 }, // 0xAD
@@ -599,9 +600,9 @@ namespace emulator
 			{ &cpu6502::LDA, &cpu6502::ZPX, 4 }, // 0xB5
 			{ &cpu6502::LDX, &cpu6502::ZPY, 4 }, // 0xB6
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0xB7
-			{ &cpu6502::CLV, &cpu6502::___, 2 }, // 0xB8
+			{ &cpu6502::CLV, &cpu6502::IMP, 2 }, // 0xB8
 			{ &cpu6502::LDA, &cpu6502::ABY, 4 }, // 0xB9
-			{ &cpu6502::TSX, &cpu6502::___, 2 }, // 0xBA
+			{ &cpu6502::TSX, &cpu6502::IMP, 2 }, // 0xBA
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0xBB
 			{ &cpu6502::LDY, &cpu6502::ABX, 4 }, // 0xBC
 			{ &cpu6502::LDA, &cpu6502::ABX, 4 }, // 0xBD
@@ -615,9 +616,9 @@ namespace emulator
 			{ &cpu6502::CMP, &cpu6502::ZPG, 3 }, // 0xC5
 			{ &cpu6502::DEC, &cpu6502::ZPG, 5 }, // 0xC6
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0xC7
-			{ &cpu6502::INY, &cpu6502::___, 2 }, // 0xC8
+			{ &cpu6502::INY, &cpu6502::IMP, 2 }, // 0xC8
 			{ &cpu6502::CMP, &cpu6502::IMM, 2 }, // 0xC9
-			{ &cpu6502::DEX, &cpu6502::___, 2 }, // 0xCA
+			{ &cpu6502::DEX, &cpu6502::IMP, 2 }, // 0xCA
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0xCB
 			{ &cpu6502::CPY, &cpu6502::ABS, 4 }, // 0xCC
 			{ &cpu6502::CMP, &cpu6502::ABS, 4 }, // 0xCD
@@ -631,7 +632,7 @@ namespace emulator
 			{ &cpu6502::CMP, &cpu6502::ZPX, 4 }, // 0xD5
 			{ &cpu6502::DEC, &cpu6502::ZPX, 6 }, // 0xD6
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0xD7
-			{ &cpu6502::CLD, &cpu6502::___, 2 }, // 0xD8
+			{ &cpu6502::CLD, &cpu6502::IMP, 2 }, // 0xD8
 			{ &cpu6502::CMP, &cpu6502::ABY, 4 }, // 0xD9
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0xDA
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0xDB
@@ -647,7 +648,7 @@ namespace emulator
 			{ &cpu6502::SBC, &cpu6502::ZPG, 3 }, // 0xE5
 			{ &cpu6502::INC, &cpu6502::ZPG, 5 }, // 0xE6
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0xE7
-			{ &cpu6502::INX, &cpu6502::___, 2 }, // 0xE8
+			{ &cpu6502::INX, &cpu6502::IMP, 2 }, // 0xE8
 			{ &cpu6502::SBC, &cpu6502::IMM, 2 }, // 0xE9
 			{ &cpu6502::NOP, &cpu6502::___, 2 }, // 0xEA
 			{ &cpu6502::SBC, &cpu6502::___, 2 }, // 0xEB
@@ -663,7 +664,7 @@ namespace emulator
 			{ &cpu6502::SBC, &cpu6502::ZPX, 4 }, // 0xF5
 			{ &cpu6502::INC, &cpu6502::ZPX, 6 }, // 0xF6
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0xF7
-			{ &cpu6502::SED, &cpu6502::___, 2 }, // 0xF8
+			{ &cpu6502::SED, &cpu6502::IMP, 2 }, // 0xF8
 			{ &cpu6502::SBC, &cpu6502::ABY, 4 }, // 0xF9
 			{ &cpu6502::___, &cpu6502::___, 2 }, // 0xFA
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0xFB
@@ -692,9 +693,7 @@ namespace emulator
 		void increment(uint8_t & reg);
 		void decrement(uint8_t & reg);
 		void compare(uint8_t lhs);
-
-		template<typename F>
-		void shift(F && f, bool acc_addressing)
+		void shift(auto && f, bool acc_addressing)
 		{
 			if (acc_addressing)
 			{
@@ -707,5 +706,6 @@ namespace emulator
 				store(data, extra_cycle::always);
 			}
 		}
+		void branch(bool is_branch);
 	};
 }
