@@ -424,7 +424,7 @@ namespace emulator
 			{ &cpu6502::ORA, &cpu6502::ZPG, 3 }, // 0x05
 			{ &cpu6502::ASL, &cpu6502::ZPG, 5 }, // 0x06
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x07
-			{ &cpu6502::PHP, &cpu6502::___, 3 }, // 0x08
+			{ &cpu6502::PHP, &cpu6502::IMP, 3 }, // 0x08
 			{ &cpu6502::ORA, &cpu6502::IMM, 2 }, // 0x09
 			{ &cpu6502::ASL, &cpu6502::ACC, 2 }, // 0x0A
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x0B
@@ -456,7 +456,7 @@ namespace emulator
 			{ &cpu6502::AND, &cpu6502::ZPG, 3 }, // 0x25
 			{ &cpu6502::ROL, &cpu6502::ZPG, 5 }, // 0x26
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x27
-			{ &cpu6502::PLP, &cpu6502::___, 4 }, // 0x28
+			{ &cpu6502::PLP, &cpu6502::IMP, 4 }, // 0x28
 			{ &cpu6502::AND, &cpu6502::IMM, 2 }, // 0x29
 			{ &cpu6502::ROL, &cpu6502::ACC, 2 }, // 0x2A
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x2B
@@ -488,7 +488,7 @@ namespace emulator
 			{ &cpu6502::EOR, &cpu6502::ZPG, 3 }, // 0x45
 			{ &cpu6502::LSR, &cpu6502::ZPG, 5 }, // 0x46
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x47
-			{ &cpu6502::PHA, &cpu6502::___, 3 }, // 0x48
+			{ &cpu6502::PHA, &cpu6502::IMP, 3 }, // 0x48
 			{ &cpu6502::EOR, &cpu6502::IMM, 2 }, // 0x49
 			{ &cpu6502::LSR, &cpu6502::ACC, 2 }, // 0x4A
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x4B
@@ -512,7 +512,7 @@ namespace emulator
 			{ &cpu6502::EOR, &cpu6502::ABX, 4 }, // 0x5D
 			{ &cpu6502::LSR, &cpu6502::ABX, 7 }, // 0x5E
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x5F
-			{ &cpu6502::RTS, &cpu6502::___, 6 }, // 0x60
+			{ &cpu6502::RTS, &cpu6502::IMP, 6 }, // 0x60
 			{ &cpu6502::ADC, &cpu6502::IDX, 6 }, // 0x61
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x62
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x63
@@ -520,7 +520,7 @@ namespace emulator
 			{ &cpu6502::ADC, &cpu6502::ZPG, 3 }, // 0x65
 			{ &cpu6502::ROR, &cpu6502::ZPG, 5 }, // 0x66
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x67
-			{ &cpu6502::PLA, &cpu6502::___, 4 }, // 0x68
+			{ &cpu6502::PLA, &cpu6502::IMP, 4 }, // 0x68
 			{ &cpu6502::ADC, &cpu6502::IMM, 2 }, // 0x69
 			{ &cpu6502::ROR, &cpu6502::ACC, 2 }, // 0x6A
 			{ &cpu6502::___, &cpu6502::___, 0 }, // 0x6B

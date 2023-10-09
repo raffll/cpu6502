@@ -68,6 +68,41 @@ namespace emulator
 		return byte;
 	}
 
+	static bool is_zero(uint8_t data)
+	{
+		return data == 0;
+	}
+
+	static bool is_negative(uint8_t data)
+	{
+		return (data & (1 << 7)) != 0;
+	}
+
+	static bool is_bit_set(uint8_t data, uint8_t bit)
+	{
+		return (data & (1 << bit)) != 0;
+	}
+
+	static uint8_t lo_byte(uint16_t word)
+	{
+		return word & 0xFF;
+	}
+
+	static uint8_t hi_byte(uint16_t word)
+	{
+		return (word >> 8) & 0xFF;
+	}
+
+	static uint16_t stack_address(uint8_t S)
+	{
+		return 0x0100 + S;
+	}
+
+	static uint8_t status_byte(cpu6502::status P)
+	{
+		return std::bit_cast<uint8_t>(P);
+	}
+
 	void cpu6502::ACC()
 	{
 		acc_addressing = true;
@@ -264,36 +299,6 @@ namespace emulator
 		return data;
 	}
 
-	static bool is_zero(uint8_t data)
-	{
-		return data == 0;
-	}
-
-	static bool is_negative(uint8_t data)
-	{
-		return (data & (1 << 7)) != 0;
-	}
-
-	static bool is_bit_set(uint8_t data, uint8_t bit)
-	{
-		return (data & (1 << bit)) != 0;
-	}
-
-	static uint8_t lo_byte(uint16_t word)
-	{
-		return word & 0xFF;
-	}
-
-	static uint8_t hi_byte(uint16_t word)
-	{
-		return (word >> 8) & 0xFF;
-	}
-
-	static uint16_t stack_address(uint8_t S)
-	{
-		return 0x0100 + S;
-	}
-
 	void cpu6502::LDA()
 	{
 		A = load();
@@ -392,9 +397,6 @@ namespace emulator
 
 	void cpu6502::push(uint8_t data)
 	{
-		address = PC;
-		clock.cycle();
-
 		address = stack_address(S);
 		S--;
 		bus.write(address, data);
@@ -408,14 +410,11 @@ namespace emulator
 
 	void cpu6502::PHP()
 	{
-		push(std::bit_cast<uint8_t>(P));
+		push(status_byte(P));
 	};
 
 	uint8_t cpu6502::pull()
 	{
-		address = PC;
-		clock.cycle();
-
 		address = stack_address(S);
 		S++;
 		clock.cycle();
@@ -463,18 +462,18 @@ namespace emulator
 		uint8_t data = load();
 		P.Z = is_zero(A & data);
 		P.N = is_negative(data);
-		P.V = (data & (1 << 6)) != 0;
+		P.V = is_bit_set(data, 6);
 	};
 
 	void cpu6502::add_or_substract(uint8_t data)
 	{
-		uint16_t result = A + data + P.C;
+		uint16_t word = A + data + P.C;
 
-		P.C = result > 0xFF;
-		P.V = ((A ^ static_cast<uint8_t>(result)) &
-			(data ^ static_cast<uint8_t>(result)) & 0x80) != 0;
+		P.C = word > 0xFF;
+		uint8_t byte = static_cast<uint8_t>(word);
+		P.V = ((A ^ byte) & (data ^ byte) & 0x80) != 0;
 
-		A = static_cast<uint8_t>(result);
+		A = byte;
 		P.Z = is_zero(A);
 		P.N = is_negative(A);
 	}
@@ -655,9 +654,6 @@ namespace emulator
 
 	void cpu6502::RTS()
 	{
-		address = PC;
-		clock.cycle();
-
 		address = stack_address(S);
 		S++;
 		clock.cycle();
@@ -683,18 +679,18 @@ namespace emulator
 		int8_t offset = bus.read(address);
 		clock.cycle();
 
-		if (is_branch)
-		{
-			address = PC;
-			PC += offset;
-			clock.cycle();
+		if (!is_branch)
+			return;
 
-			if (lo_byte(PC) < offset)
-			{
-				address = PC;
-				clock.cycle();
-			}
-		}
+		address = PC;
+		PC += offset;
+		clock.cycle();
+
+		if (lo_byte(PC) >= offset)
+			return;
+
+		address = PC;
+		clock.cycle();
 	}
 
 	void cpu6502::BCC()
@@ -772,7 +768,42 @@ namespace emulator
 		P.I = 1;
 	};
 
-	void cpu6502::BRK() {};
-	void cpu6502::NOP() {};
-	void cpu6502::RTI() {};
+	void cpu6502::BRK()
+	{
+		address = stack_address(S);
+		S--;
+		P.B = 1;
+		bus.write(address, hi_byte(PC));
+		clock.cycle();
+
+		address = stack_address(S);
+		S--;
+		bus.write(address, lo_byte(PC));
+		clock.cycle();
+
+		address = stack_address(S);
+		S--;
+		bus.write(address, status_byte(P));
+		clock.cycle();
+
+		address = 0xFFFE;
+		uint8_t lo = bus.read(address);
+		clock.cycle();
+
+		address = 0xFFFF;
+		uint8_t hi = bus.read(address);
+		clock.cycle();
+
+		PC = (hi << 8) | lo;
+	};
+
+	void cpu6502::NOP()
+	{
+
+	};
+
+	void cpu6502::RTI()
+	{
+
+	};
 }
