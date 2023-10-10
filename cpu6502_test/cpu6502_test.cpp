@@ -57,6 +57,17 @@ namespace emulator
 		return 0x4080 + offset_reg;
 	}
 
+	uint16_t cpu6502_test::addressing_IND(oc opcode)
+	{
+		bus.write(address++, opcode);
+		bus.write(address++, 0x20);
+		bus.write(address++, 0x30);
+		bus.write(0x3020, 0x80);
+		bus.write(0x3021, 0x40);
+
+		return 0x4080;
+	}
+
 	uint16_t cpu6502_test::addressing_IDX(oc opcode)
 	{
 		cpu.X = 0x0F;
@@ -1883,5 +1894,25 @@ namespace emulator
 		auto addr = addressing_AB(opcode, cpu.X);
 		bus.write(addr, 0b10000000);
 		ror(opcode, addr);
+	}
+
+	TEST_F(cpu6502_test, JMP_ABS)
+	{
+		auto opcode = oc::JMP_ABS;
+
+		auto addr = addressing_ABS(opcode);
+		cpu.execute();
+		
+		EXPECT_EQ(cpu.PC, 0x4080);
+	}
+
+	TEST_F(cpu6502_test, JMP_IND)
+	{
+		auto opcode = oc::JMP_IND;
+
+		auto addr = addressing_IND(opcode);
+		cpu.execute();
+
+		EXPECT_EQ(cpu.PC, 0x4080);
 	}
 }

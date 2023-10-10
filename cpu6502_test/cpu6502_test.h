@@ -23,6 +23,7 @@ namespace emulator
 		uint16_t addressing_ZP(oc opcode, uint8_t & offset_reg);
 		uint16_t addressing_ABS(oc opcode);
 		uint16_t addressing_AB(oc opcode, uint8_t & offset_reg);
+		uint16_t addressing_IND(oc opcode);
 		uint16_t addressing_IDX(oc opcode);
 		uint16_t addressing_IDY(oc opcode);
 
