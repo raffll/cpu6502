@@ -1,19 +1,20 @@
 #include "clock.h"
 
-namespace emulator
+namespace emulator {
+
+void clock::reset()
 {
-	void clock::reset()
-	{
-		cycles = 0;
-	}
+    cycles = 0;
+}
 
-	void clock::cycle()
-	{
-		cycles++;
-	}
+void clock::cycle()
+{
+    cycles++;
+}
 
-	size_t clock::get_cycles()
-	{
-		return cycles;
-	}
+size_t clock::get_cycles()
+{
+    return cycles;
+}
+
 }
