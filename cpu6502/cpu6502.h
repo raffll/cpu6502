@@ -4,6 +4,9 @@
 #include <bit>
 #include <cstdint>
 #include <functional>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
 #include <string>
 
 #include "i_bus.h"
@@ -45,6 +48,8 @@ public:
     void reset();
     void execute();
     void run();
+    void cycle();
+    void log();
 
 private:
     // adressing modes
