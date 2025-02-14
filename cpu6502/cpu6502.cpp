@@ -120,24 +120,24 @@ void cpu6502::ZPG()
 {
     address = PC;
     PC++;
-    uint8_t lo = bus.read(address);
+    uint8_t adl = bus.read(address);
     clock.cycle();
 
-    address = lo;
+    address = adl;
 }
 
 void cpu6502::zero_page(uint8_t offset)
 {
     address = PC;
     PC++;
-    uint8_t lo = bus.read(address);
+    uint8_t bal = bus.read(address);
     clock.cycle();
 
-    address = lo;
-    lo = add_register(lo, offset);
+    address = bal;
+    uint8_t adl = add_register(bal, offset);
     clock.cycle();
 
-    address = lo;
+    address = adl;
 }
 
 void cpu6502::ZPX()
@@ -152,37 +152,38 @@ void cpu6502::ZPY()
 
 void cpu6502::REL()
 {
+    // nothing
 }
 
 void cpu6502::ABS()
 {
     address = PC;
     PC++;
-    uint8_t lo = bus.read(address);
+    uint8_t adl = bus.read(address);
     clock.cycle();
 
     address = PC;
     PC++;
-    uint8_t hi = bus.read(address);
+    uint8_t adh = bus.read(address);
     clock.cycle();
 
-    address = (hi << 8) | lo;
+    address = (adh << 8) | adl;
 }
 
 void cpu6502::absolute(uint8_t offset)
 {
     address = PC;
     PC++;
-    uint8_t lo = bus.read(address);
+    uint8_t bal = bus.read(address);
     clock.cycle();
 
     address = PC;
     PC++;
-    lo = add_register(lo, offset, true);
-    uint8_t hi = bus.read(address);
+    uint8_t adl = add_register(bal, offset, true);
+    uint8_t adh = bus.read(address);
     clock.cycle();
 
-    address = (hi << 8) | lo;
+    address = (adh << 8) | adl;
 }
 
 void cpu6502::ABX()
@@ -199,64 +200,64 @@ void cpu6502::IND()
 {
     address = PC;
     PC++;
-    uint8_t p_lo = bus.read(address);
+    uint8_t ial = bus.read(address);
     clock.cycle();
 
     address = PC;
     PC++;
-    uint8_t p_hi = bus.read(address);
+    uint8_t iah = bus.read(address);
     clock.cycle();
 
-    address = (p_hi << 8) | p_lo;
-    uint8_t lo = bus.read(address);
+    address = (iah << 8) | ial;
+    uint8_t adl = bus.read(address);
     clock.cycle();
 
-    address = (p_hi << 8) | (p_lo + 1);
-    uint8_t hi = bus.read(address);
+    address = (iah << 8) | (ial + 1);
+    uint8_t adh = bus.read(address);
     clock.cycle();
 
-    address = (hi << 8) | lo;
+    address = (adh << 8) | adl;
 }
 
 void cpu6502::IDX()
 {
     address = PC;
     PC++;
-    uint8_t ptr = bus.read(address);
+    uint8_t bal = bus.read(address);
     clock.cycle();
 
-    address = ptr;
-    ptr = add_register(ptr, X);
+    address = bal;
+    bal = add_register(bal, X);
     clock.cycle();
 
-    address = ptr;
-    uint8_t lo = bus.read(address);
+    address = bal;
+    uint8_t adl = bus.read(address);
     clock.cycle();
 
-    address = ptr + 1;
-    uint8_t hi = bus.read(address);
+    address = bal + 1;
+    uint8_t adh = bus.read(address);
     clock.cycle();
 
-    address = (hi << 8) | lo;
+    address = (adh << 8) | adl;
 }
 
 void cpu6502::IDY()
 {
     address = PC;
     PC++;
-    uint8_t ptr = bus.read(address);
+    uint8_t ial = bus.read(address);
     clock.cycle();
 
-    address = ptr;
-    uint8_t lo = bus.read(address);
+    address = ial;
+    uint8_t bal = bus.read(address);
     clock.cycle();
 
-    address = ptr + 1;
-    lo = add_register(lo, Y, true);
-    uint8_t hi = bus.read(address);
+    address = ial + 1;
+    uint8_t adl = add_register(bal, Y, true);
+    uint8_t adh = bus.read(address);
     clock.cycle();
 
-    address = (hi << 8) | lo;
+    address = (adh << 8) | adl;
 }
 
 uint8_t cpu6502::load(extra_cycle e)
@@ -615,6 +616,8 @@ void cpu6502::JMP()
 
 void cpu6502::JSR()
 {
+    uint16_t subroutine_address = address;
+
     address = stack_address(S);
     clock.cycle();
 
@@ -627,6 +630,8 @@ void cpu6502::JSR()
     S--;
     bus.write(address, lo_byte(PC));
     clock.cycle();
+
+    PC = subroutine_address;
 };
 
 void cpu6502::RTS()

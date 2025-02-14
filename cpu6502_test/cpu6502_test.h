@@ -12,19 +12,19 @@ public:
     emulator::clock clock;
     emulator::memory64k bus;
     emulator::cpu6502 cpu { clock, bus };
-    uint16_t address = {};
+    uint16_t counter = {};
     bool carry = false;
 
     void SetUp() override;
 
-    void addressing_IMM(oc opcode, uint8_t data);
-    uint16_t addressing_ZPG(oc opcode);
-    uint16_t addressing_ZP(oc opcode, uint8_t& offset_reg);
-    uint16_t addressing_ABS(oc opcode);
-    uint16_t addressing_AB(oc opcode, uint8_t& offset_reg);
-    uint16_t addressing_IND(oc opcode);
-    uint16_t addressing_IDX(oc opcode);
-    uint16_t addressing_IDY(oc opcode);
+    void create_IMM(oc opcode, uint8_t data);
+    uint16_t create_ZPG(oc opcode);
+    uint16_t create_ZP(oc opcode, uint8_t& offset_reg);
+    uint16_t create_ABS(oc opcode);
+    uint16_t create_AB(oc opcode, uint8_t& offset_reg);
+    uint16_t create_IND(oc opcode);
+    uint16_t create_IDX(oc opcode);
+    uint16_t create_IDY(oc opcode);
 
     void load_IMM(oc opcode, uint8_t& reg);
     void load_ZPG(oc opcode, uint8_t& reg);
@@ -41,7 +41,7 @@ public:
     void store_IDX(oc opcode, uint8_t& reg);
     void store_IDY(oc opcode, uint8_t& reg);
 
-    void transfer(oc opcode, uint8_t& src, uint8_t& dst, bool check = true);
+    void transfer(oc opcode, uint8_t& src, uint8_t& dst, bool check_Z_N = true);
     void logic(oc opcode, uint8_t a, uint8_t b);
     void add(oc opcode);
     void substract(oc opcode);
