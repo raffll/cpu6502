@@ -506,7 +506,7 @@ TEST_F(cpu6502_test, PHP_IMP)
     cpu.execute();
 
     EXPECT_EQ(cpu.S, 0xFE);
-    EXPECT_EQ(bus.read(0x01FF), 0x80);
+    EXPECT_EQ(bus.read(0x01FF), 0b10110000);
     EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
 }
 

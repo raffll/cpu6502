@@ -31,14 +31,14 @@ public:
     uint8_t S {}; // stack pointer
 
     struct status {
-        uint8_t C : 1; // carry flag
-        uint8_t Z : 1; // zero flag
-        uint8_t I : 1; // interrupt disable
-        uint8_t D : 1; // decimal mode
-        uint8_t B : 1; // break command
-        uint8_t _ : 1;
-        uint8_t V : 1; // overflow flag
-        uint8_t N : 1; // negative flag
+        uint8_t C : 1 = 0; // carry flag
+        uint8_t Z : 1 = 0; // zero flag
+        uint8_t I : 1 = 0; // interrupt disable
+        uint8_t D : 1 = 0; // decimal mode
+        uint8_t B : 1 = 1; // break command
+        uint8_t _ : 1 = 1; // unused
+        uint8_t V : 1 = 0; // overflow flag
+        uint8_t N : 1 = 0; // negative flag
     };
 
     status P {}; // processor status register
