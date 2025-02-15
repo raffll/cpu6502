@@ -1931,4 +1931,67 @@ TEST_F(cpu6502_test, JSR_ABS)
     EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
 }
 
+TEST_F(cpu6502_test, RTS_IMP)
+{
+    auto opcode = oc::RTS_IMP;
+
+    cpu.PC = 0x4080;
+    bus.write(cpu.PC, opcode);
+    bus.write(0x01FF, 0x02);
+    bus.write(0x01FE, 0x03);
+    cpu.S = 0x01FD_u8;
+    cpu.execute();
+
+    EXPECT_EQ(cpu.S, 0xFF);
+    EXPECT_EQ(cpu.PC, 0x0203);
+    EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
+}
+
+TEST_F(cpu6502_test, BCS_REL)
+{
+    auto opcode = oc::BCS_REL;
+
+    bus.write(counter++, opcode);
+    bus.write(counter++, 0x00);
+    cpu.execute();
+
+    EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
+
+    clock.reset();
+    bus.write(counter++, opcode);
+    bus.write(counter++, 0x00);
+    cpu.P.C = 1;
+    cpu.execute();
+
+    EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles + 1);
+
+    clock.reset();
+    bus.write(counter++, opcode);
+    bus.write(counter++, 0xFF);
+    cpu.P.C = 1;
+    cpu.execute();
+
+    EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles + 2);
+}
+
+TEST_F(cpu6502_test, BRK_IMP)
+{
+    auto opcode = oc::BRK_IMP;
+
+    bus.write(cpu.PC, opcode);
+    cpu.execute();
+
+    EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
+}
+
+TEST_F(cpu6502_test, RTI_IMP)
+{
+    auto opcode = oc::RTI_IMP;
+
+    bus.write(cpu.PC, opcode);
+    cpu.execute();
+
+    EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
+}
+
 }

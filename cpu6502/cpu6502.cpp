@@ -69,7 +69,7 @@ void cpu6502::log()
               << " A: " << std::format("{:#04x}", A)
               << " X: " << std::format("{:#04x}", X)
               << " Y: " << std::format("{:#04x}", Y)
-              << " status:" 
+              << " status:"
               << " C: " << std::to_string(P.C)
               << " Z: " << std::to_string(P.Z)
               << " I: " << std::to_string(P.I)
@@ -128,6 +128,11 @@ static uint8_t status_byte(cpu6502::status P)
     return std::bit_cast<uint8_t>(P);
 }
 
+static cpu6502::status status_byte(uint8_t byte)
+{
+    return std::bit_cast<cpu6502::status>(byte);
+}
+
 void cpu6502::ACC()
 {
     acc_addressing = true;
@@ -179,11 +184,6 @@ void cpu6502::ZPX()
 void cpu6502::ZPY()
 {
     zero_page(Y);
-}
-
-void cpu6502::REL()
-{
-    // nothing
 }
 
 void cpu6502::ABS()
@@ -451,7 +451,7 @@ void cpu6502::PLA()
 
 void cpu6502::PLP()
 {
-    P = std::bit_cast<status>(pull());
+    P = status_byte(pull());
 };
 
 void cpu6502::AND()
@@ -676,15 +676,15 @@ void cpu6502::RTS()
 
     address = stack_address(S);
     S++;
-    uint8_t lo = bus.read(address);
+    uint8_t pcl = bus.read(address);
     cycle();
 
     address = stack_address(S);
-    uint8_t hi = bus.read(address);
+    uint8_t pch = bus.read(address);
     cycle();
 
-    address = (hi << 8) | lo;
-    PC++;
+    PC = (pch << 8) | pcl;
+    address = PC;
     cycle();
 };
 
@@ -692,7 +692,7 @@ void cpu6502::branch(bool is_branch)
 {
     address = PC;
     PC++;
-    int8_t offset = bus.read(address);
+    uint8_t offset = bus.read(address);
     cycle();
 
     if (!is_branch)
@@ -702,7 +702,8 @@ void cpu6502::branch(bool is_branch)
     PC += offset;
     cycle();
 
-    if (lo_byte(PC) >= offset)
+    uint8_t pcl = lo_byte(PC);
+    if (pcl >= offset)
         return;
 
     address = PC;
@@ -788,7 +789,6 @@ void cpu6502::BRK()
 {
     address = stack_address(S);
     S--;
-    P.B = 1;
     bus.write(address, hi_byte(PC));
     cycle();
 
@@ -798,23 +798,41 @@ void cpu6502::BRK()
     cycle();
 
     address = stack_address(S);
-    S--;
     bus.write(address, status_byte(P));
     cycle();
 
     address = 0xFFFE;
-    uint8_t lo = bus.read(address);
+    uint8_t adl = bus.read(address);
     cycle();
 
     address = 0xFFFF;
-    uint8_t hi = bus.read(address);
+    uint8_t adh = bus.read(address);
     cycle();
 
-    PC = (hi << 8) | lo;
+    PC = (adh << 8) | adl;
 };
 
-void cpu6502::NOP() {};
+void cpu6502::RTI()
+{
+    address = stack_address(S);
+    S++;
+    cycle();
 
-void cpu6502::RTI() {};
+    address = stack_address(S);
+    S++;
+    P = status_byte(bus.read(address));
+    cycle();
+
+    address = stack_address(S);
+    S++;
+    uint8_t pcl = bus.read(address);
+    cycle();
+
+    address = stack_address(S);
+    uint8_t pch = bus.read(address);
+    cycle();
+
+    PC = (pch << 8) | pcl;
+};
 
 }

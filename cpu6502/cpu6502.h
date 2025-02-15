@@ -59,13 +59,13 @@ private:
     void ZPG(); // zero page
     void ZPX(); // zero page, X
     void ZPY(); // zero page, Y
-    void REL(); // relative
     void ABS(); // absolute
     void ABX(); // absolute, X
     void ABY(); // absolute, Y
     void IND(); // indirect
     void IDX(); // indexed indirect
     void IDY(); // indirect indexed
+    void REL() {}; // relative
 
 public:
     // load operations
@@ -145,13 +145,13 @@ public:
 
     // system functions
     void BRK();
-    void NOP();
     void RTI();
+    void NOP() {};
 
     void ___() {};
 
     enum opcode : uint8_t {
-        BRK____ = 0x00,
+        BRK_IMP = 0x00,
         ORA_IDX = 0x01,
         _0x02__ = 0x02,
         _0x03__ = 0x03,
@@ -215,7 +215,7 @@ public:
         AND_ABX = 0x3D,
         ROL_ABX = 0x3E,
         _0x3F__ = 0x3F,
-        RTI____ = 0x40,
+        RTI_IMP = 0x40,
         EOR_IDX = 0x41,
         _0x42__ = 0x42,
         _0x43__ = 0x43,
@@ -417,7 +417,7 @@ public:
     };
 
     const std::array<instruction_t, 256> instructions { {
-        { BRK____, &cpu6502::BRK, &cpu6502::___, 7 }, // 0x00
+        { BRK_IMP, &cpu6502::BRK, &cpu6502::IMP, 7 }, // 0x00
         { ORA_IDX, &cpu6502::ORA, &cpu6502::IDX, 6 }, // 0x01
         { _0x02__, &cpu6502::___, &cpu6502::___, 0 }, // 0x02
         { _0x03__, &cpu6502::___, &cpu6502::___, 0 }, // 0x03
@@ -481,7 +481,7 @@ public:
         { AND_ABX, &cpu6502::AND, &cpu6502::ABX, 4 }, // 0x3D
         { ROL_ABX, &cpu6502::ROL, &cpu6502::ABX, 7 }, // 0x3E
         { _0x3F__, &cpu6502::___, &cpu6502::___, 0 }, // 0x3F
-        { RTI____, &cpu6502::RTI, &cpu6502::___, 6 }, // 0x40
+        { RTI_IMP, &cpu6502::RTI, &cpu6502::IMP, 6 }, // 0x40
         { EOR_IDX, &cpu6502::EOR, &cpu6502::IDX, 6 }, // 0x41
         { _0x42__, &cpu6502::___, &cpu6502::___, 0 }, // 0x42
         { _0x43__, &cpu6502::___, &cpu6502::___, 0 }, // 0x43
