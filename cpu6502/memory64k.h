@@ -11,6 +11,7 @@ public:
     void reset() override;
     uint8_t read(uint16_t address) override;
     void write(uint16_t address, uint8_t byte) override;
+    void load_file(std::string filepath) override;
 
     ~memory64k() override = default;
 

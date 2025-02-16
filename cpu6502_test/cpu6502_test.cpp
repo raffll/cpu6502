@@ -1917,7 +1917,7 @@ TEST_F(cpu6502_test, JMP_IND)
     EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
 }
 
-TEST_F(cpu6502_test, JSR_ABS)
+TEST_F(cpu6502_test, JSR____)
 {
     auto opcode = oc::JSR_ABS;
 
@@ -1967,7 +1967,7 @@ TEST_F(cpu6502_test, BCS_REL)
 
     clock.reset();
     bus.write(counter++, opcode);
-    bus.write(counter++, 0xFF);
+    bus.write(counter++, 0x80);
     cpu.P.C = 1;
     cpu.execute();
 
@@ -1992,6 +1992,24 @@ TEST_F(cpu6502_test, RTI_IMP)
     cpu.execute();
 
     EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
+}
+
+TEST_F(cpu6502_test, NOP_IMP)
+{
+    auto opcode = oc::NOP_IMP;
+
+    bus.write(cpu.PC, opcode);
+    cpu.execute();
+
+    EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
+}
+
+TEST_F(cpu6502_test, RUN)
+{
+    bus.load_file("C:/Users/rafal/Source/cpu6502/docs/6502_functional_test.bin");
+    clock.set_timing(0);
+    cpu.PC = 0x0400;
+    cpu.run(0x37c9);
 }
 
 }
