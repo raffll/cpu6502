@@ -38,8 +38,7 @@ public:
 
     uint16_t address {}; // address bus
     uint8_t data {}; // data bus
-
-    bool read_flag = true; // r/w flag
+    bool control = true; // r/w flag
 
     void log();
 
@@ -50,6 +49,8 @@ public:
     void write();
 
     void reset();
+    void irq() {};
+    void nmi() {};
 
 private:
     // adressing modes
@@ -147,11 +148,11 @@ private:
     void RTI();
     void NOP() {};
 
-    void ___() { throw std::exception("illegal opcode!"); };
+    void ___() {};
 
 public:
     enum opcode : uint8_t {
-        BRK_IMP = 0x00,
+        BRK____ = 0x00,
         ORA_IDX = 0x01,
         _0x02__ = 0x02,
         _0x03__ = 0x03,
@@ -183,7 +184,7 @@ public:
         ORA_ABX = 0x1D,
         ASL_ABX = 0x1E,
         _0x1F__ = 0x1F,
-        JSR_ABS = 0x20,
+        JSR____ = 0x20,
         AND_IDX = 0x21,
         _0x22__ = 0x22,
         _0x23__ = 0x23,
@@ -418,7 +419,7 @@ public:
     };
 
     const std::array<instruction_t, 256> instructions { {
-        { BRK_IMP, "BRK_IMP 0x00", &cpu6502::BRK, &cpu6502::IMP, 7 }, // 0x00
+        { BRK____, "BRK____ 0x00", &cpu6502::BRK, &cpu6502::___, 7 }, // 0x00
         { ORA_IDX, "ORA_IDX 0x01", &cpu6502::ORA, &cpu6502::IDX, 6 }, // 0x01
         { _0x02__, "_0x02__ 0x02", &cpu6502::___, &cpu6502::___, 0 }, // 0x02
         { _0x03__, "_0x03__ 0x03", &cpu6502::___, &cpu6502::___, 0 }, // 0x03
@@ -450,7 +451,7 @@ public:
         { ORA_ABX, "ORA_ABX 0x1D", &cpu6502::ORA, &cpu6502::ABX, 4 }, // 0x1D
         { ASL_ABX, "ASL_ABX 0x1E", &cpu6502::ASL, &cpu6502::ABX, 7 }, // 0x1E
         { _0x1F__, "_0x1F__ 0x1F", &cpu6502::___, &cpu6502::___, 0 }, // 0x1F
-        { JSR_ABS, "JSR_ABS 0x20", &cpu6502::JSR, &cpu6502::ABS, 6 }, // 0x20
+        { JSR____, "JSR____ 0x20", &cpu6502::JSR, &cpu6502::___, 6 }, // 0x20
         { AND_IDX, "AND_IDX 0x21", &cpu6502::AND, &cpu6502::IDX, 6 }, // 0x21
         { _0x22__, "_0x22__ 0x22", &cpu6502::___, &cpu6502::___, 0 }, // 0x22
         { _0x23__, "_0x23__ 0x23", &cpu6502::___, &cpu6502::___, 0 }, // 0x23
@@ -690,7 +691,7 @@ private:
     void transfer(uint8_t src, uint8_t& dst);
     void push();
     void pull();
-    void add_or_substract();
+    void add(bool substract);
     void increment(uint8_t& reg);
     void decrement(uint8_t& reg);
     void compare(uint8_t lhs);

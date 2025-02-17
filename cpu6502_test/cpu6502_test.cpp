@@ -1917,16 +1917,16 @@ TEST_F(cpu6502_test, JMP_IND)
     EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
 }
 
-TEST_F(cpu6502_test, JSR_ABS)
+TEST_F(cpu6502_test, JSR____)
 {
-    auto opcode = oc::JSR_ABS;
+    auto opcode = oc::JSR____;
 
     auto address = create_ABS(opcode);
     cpu.execute();
 
     EXPECT_EQ(cpu.S, 0xFD);
     EXPECT_EQ(bus.read(0x01FF), 0x02);
-    EXPECT_EQ(bus.read(0x01FE), 0x03);
+    EXPECT_EQ(bus.read(0x01FE), 0x02);
     EXPECT_EQ(cpu.PC, address);
     EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
 }
@@ -1939,11 +1939,11 @@ TEST_F(cpu6502_test, RTS_IMP)
     bus.write(cpu.PC, opcode);
     bus.write(0x01FF, 0x02);
     bus.write(0x01FE, 0x03);
-    cpu.S = 0x01FD_u8;
+    cpu.S = 0xFD;
     cpu.execute();
 
     EXPECT_EQ(cpu.S, 0xFF);
-    EXPECT_EQ(cpu.PC, 0x0203);
+    EXPECT_EQ(cpu.PC, 0x0204);
     EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
 }
 
@@ -1974,9 +1974,9 @@ TEST_F(cpu6502_test, BCS_REL)
     EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles + 2);
 }
 
-TEST_F(cpu6502_test, BRK_IMP)
+TEST_F(cpu6502_test, BRK____)
 {
-    auto opcode = oc::BRK_IMP;
+    auto opcode = oc::BRK____;
 
     bus.write(cpu.PC, opcode);
     cpu.execute();
@@ -2006,10 +2006,10 @@ TEST_F(cpu6502_test, NOP_IMP)
 
 TEST_F(cpu6502_test, RUN)
 {
-    //bus.load_file("C:/Users/rafal/Source/cpu6502/docs/6502_functional_test.bin");
-    //clock.set_timing(0);
-    //cpu.PC = 0x0400;
-    //cpu.run(0x37c9);
+    bus.load_file("C:/Users/rafal/Source/cpu6502/docs/6502_65C02_functional_tests-master/bin_files/6502_functional_test.bin");
+    clock.set_timing(0);
+    cpu.PC = 0x0400;
+    cpu.run();
 }
 
 }

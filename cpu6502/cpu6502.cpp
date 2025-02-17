@@ -18,8 +18,7 @@ void cpu6502::log()
     std::stringstream ss;
     ss << "oc: " << instructions.at(oc).name
        << " cycle: " << cycle
-       << " r/w: " << read_flag
-       << " PC: " << std::format("{:#06x}", PC)
+       << " r/w: " << control
        << " address: " << std::format("{:#06x}", address)
        << " data: " << std::format("{:#04x}", data)
        << " A: " << std::format("{:#04x}", A)
@@ -35,6 +34,7 @@ void cpu6502::log()
        << std::to_string(P.I)
        << std::to_string(P.Z)
        << std::to_string(P.C)
+       << " PC: " << std::format("{:#06x}", PC)
        << "\n";
 
     last_cycle = clock.get_cycles();
@@ -83,14 +83,14 @@ void cpu6502::cycle()
 
 uint8_t cpu6502::read()
 {
-    read_flag = true;
+    control = true;
     data = bus.read(address);
     return data;
 }
 
 void cpu6502::write()
 {
-    read_flag = false;
+    control = false;
     bus.write(address, data);
 }
 
@@ -202,10 +202,10 @@ void cpu6502::zero_page(uint8_t offset)
     cycle();
 
     address = bal;
-    uint8_t adl = add_register(bal, offset);
+    bal = add_register(bal, offset);
     cycle();
 
-    address = adl;
+    address = bal;
 }
 
 void cpu6502::ZPX()
@@ -220,9 +220,6 @@ void cpu6502::ZPY()
 
 void cpu6502::ABS()
 {
-    if (oc == opcode::JSR_ABS)
-        return;
-
     address = PC;
     PC++;
     uint8_t adl = read();
@@ -245,11 +242,11 @@ void cpu6502::absolute(uint8_t offset)
 
     address = PC;
     PC++;
-    uint8_t adl = add_register(bal, offset, true);
-    uint8_t adh = read();
+    bal = add_register(bal, offset, true);
+    uint8_t bah = read();
     cycle();
 
-    address = (adh << 8) | adl;
+    address = (bah << 8) | bal;
 }
 
 void cpu6502::ABX()
@@ -319,11 +316,11 @@ void cpu6502::IDY()
     cycle();
 
     address = ial + 1;
-    uint8_t adl = add_register(bal, Y, true);
-    uint8_t adh = read();
+    bal = add_register(bal, Y, true);
+    uint8_t bah = read();
     cycle();
 
-    address = (adh << 8) | adl;
+    address = (bah << 8) | bal;
 }
 
 void cpu6502::load(extra_cycle e)
@@ -538,15 +535,20 @@ void cpu6502::BIT()
     P.V = is_bit_set(data, 6);
 };
 
-void cpu6502::add_or_substract()
+void cpu6502::add(bool substract)
 {
-    uint16_t word = A + data + P.C;
+    uint8_t byte = data;
 
-    P.C = word > 0xFF;
-    uint8_t byte = static_cast<uint8_t>(word);
-    P.V = ((A ^ byte) & (data ^ byte) & 0x80) != 0;
+    if (substract)
+        byte = ~byte;
 
-    A = byte;
+    uint16_t result = A + byte + P.C;
+
+    P.C = result > 0xFF;
+    uint8_t lo_result = static_cast<uint8_t>(result);
+    P.V = ((A ^ lo_result) & (byte ^ lo_result) & 0x80) != 0;
+
+    A = lo_result;
     P.Z = is_zero(A);
     P.N = is_negative(A);
 }
@@ -554,14 +556,13 @@ void cpu6502::add_or_substract()
 void cpu6502::ADC()
 {
     load();
-    add_or_substract();
+    add(false);
 };
 
 void cpu6502::SBC()
 {
     load();
-    data = ~data;
-    add_or_substract();
+    add(true);
 };
 
 void cpu6502::compare(uint8_t lhs)
@@ -857,6 +858,10 @@ void cpu6502::SEI()
 
 void cpu6502::BRK()
 {
+    address = PC;
+    PC++;
+    cycle();
+
     address = stack_address(S);
     S--;
     data = hi_byte(PC);
@@ -870,6 +875,7 @@ void cpu6502::BRK()
     cycle();
 
     address = stack_address(S);
+    S--;
     data = status_byte(P);
     write();
     cycle();
@@ -883,6 +889,7 @@ void cpu6502::BRK()
     cycle();
 
     PC = (adh << 8) | adl;
+    P.I = 1;
 };
 
 void cpu6502::RTI()
