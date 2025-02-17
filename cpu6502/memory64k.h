@@ -1,7 +1,6 @@
 #pragma once
 
-#include <array>
-
+#include "types.h"
 #include "i_bus.h"
 
 namespace emulator {

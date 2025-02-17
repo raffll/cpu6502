@@ -1,5 +1,6 @@
 #pragma once
 
+#include "types.h"
 #include "i_clock.h"
 
 namespace emulator {

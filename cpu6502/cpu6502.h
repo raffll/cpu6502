@@ -1,14 +1,5 @@
 #pragma once
 
-#include <array>
-#include <bit>
-#include <cstdint>
-#include <functional>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
-#include <string>
-
 #include "i_bus.h"
 #include "i_clock.h"
 #include "types.h"
@@ -22,7 +13,7 @@ public:
     i_clock& clock;
     i_bus& bus;
 
-    uint8_t oc {};
+    uint8_t oc {}; // opcode
 
     uint8_t A {}; // accumulator
     uint8_t X {}; // X register
@@ -48,26 +39,17 @@ public:
     uint16_t address {}; // address bus
     uint8_t data {}; // data bus
 
-    bool read_flag = true;
+    bool read_flag = true; // r/w flag
 
-    void reset();
+    void log();
+
     void execute();
     void run(uint16_t stop = 0x0000);
     void cycle();
+    uint8_t read();
+    void write();
 
-    uint8_t read(uint16_t addr)
-    {
-        read_flag = true;
-        data = bus.read(addr);
-        return data;
-    }
-
-    void write(uint16_t addr, uint8_t byte)
-    {
-        read_flag = false;
-        data = byte;
-        bus.write(addr, data);
-    }
+    void reset();
 
 private:
     // adressing modes
@@ -85,7 +67,6 @@ private:
     void IDY(); // indirect indexed
     void REL() {}; // relative
 
-public:
     // load operations
     void LDA();
     void LDX();
@@ -168,6 +149,7 @@ public:
 
     void ___() { throw std::exception("illegal opcode!"); };
 
+public:
     enum opcode : uint8_t {
         BRK_IMP = 0x00,
         ORA_IDX = 0x01,
@@ -723,8 +705,6 @@ private:
         }
     }
     void branch(bool is_branch);
-
-    void log();
 };
 
 }

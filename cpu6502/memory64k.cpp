@@ -1,7 +1,4 @@
-#include <fstream>
-
 #include "memory64k.h"
-#include "types.h"
 
 namespace emulator {
 
