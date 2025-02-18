@@ -8,8 +8,11 @@ cpu6502::cpu6502(i_clock& clock, i_bus& bus)
 {
 }
 
-void cpu6502::log()
+void cpu6502::log(bool show)
 {
+    if (!show)
+       return;
+
     static size_t last_cycle {};
     std::string cycle = (clock.get_cycles() == last_cycle)
         ? std::string(std::to_string(clock.get_cycles()).size(), '-')
@@ -58,19 +61,15 @@ void cpu6502::execute()
 
     instructions[oc].addressing(*this);
     instructions[oc].operation(*this);
-
-    log();
 }
 
 void cpu6502::run(uint16_t stop)
 {
     try {
-        while (PC != stop) {
+        while (address != stop) {
             execute();
         }
-        while (std::cin.get()) {
-            execute();
-        }
+        log(true);
     } catch (const std::exception&) {
     }
 }
@@ -78,7 +77,7 @@ void cpu6502::run(uint16_t stop)
 void cpu6502::cycle()
 {
     clock.cycle();
-    log();
+    log(false);
 }
 
 uint8_t cpu6502::read()
@@ -341,7 +340,6 @@ void cpu6502::load(extra_cycle e)
         if (add_carry) {
             address += 0x0100;
             read();
-            log();
         }
 
         if (add_cycle) {
@@ -384,7 +382,6 @@ void cpu6502::store(extra_cycle e)
     case extra_cycle::if_carry_possible:
         if (add_carry) {
             address += 0x0100;
-            log();
         }
         if (add_cycle) {
             cycle();
@@ -565,12 +562,12 @@ void cpu6502::SBC()
     add(true);
 };
 
-void cpu6502::compare(uint8_t lhs)
+void cpu6502::compare(uint8_t reg)
 {
     load();
-    P.C = lhs >= data;
-    P.Z = is_zero(lhs - data);
-    P.N = is_negative(lhs - data);
+    P.C = reg >= data;
+    P.Z = is_zero(reg - data);
+    P.N = is_negative(reg - data);
 }
 
 void cpu6502::CMP()
@@ -753,10 +750,10 @@ void cpu6502::RTS()
     cycle();
 
     address = (pch << 8) | pcl;
-    pcl++;
     cycle();
 
     PC = (pch << 8) | pcl;
+    PC++;
 };
 
 void cpu6502::branch(bool is_branch)

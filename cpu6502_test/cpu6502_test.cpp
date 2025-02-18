@@ -1947,9 +1947,9 @@ TEST_F(cpu6502_test, RTS_IMP)
     EXPECT_EQ(clock.get_cycles(), cpu.instructions.at(opcode).cycles);
 }
 
-TEST_F(cpu6502_test, BCS_REL)
+TEST_F(cpu6502_test, BCS____)
 {
-    auto opcode = oc::BCS_REL;
+    auto opcode = oc::BCS____;
 
     bus.write(counter++, opcode);
     bus.write(counter++, 0x00);
@@ -2006,10 +2006,10 @@ TEST_F(cpu6502_test, NOP_IMP)
 
 TEST_F(cpu6502_test, RUN)
 {
-    bus.load_file("C:/Users/rafal/Source/cpu6502/docs/6502_65C02_functional_tests-master/bin_files/6502_functional_test.bin");
+    bus.load_file("C:/Users/rafal/Source/cpu6502/docs/6502_65C02_functional_tests-master/6502_functional_test.bin");
     clock.set_timing(0);
     cpu.PC = 0x0400;
-    cpu.run();
+    cpu.run(0x3699);
 }
 
 }
