@@ -40,17 +40,20 @@ public:
     uint8_t data {}; // data bus
     bool control = true; // r/w flag
 
+    using interrupt_vec = std::pair<uint16_t, uint16_t>;
+    interrupt_vec NMI_VEC = { 0xFFFA, 0xFFFB };
+    interrupt_vec RES_VEC = { 0xFFFC, 0xFFFD };
+    interrupt_vec IRQ_VEC = { 0xFFFE, 0xFFFF };
+
     void log(bool show);
 
-    void execute();
     void run(uint16_t stop);
     void cycle();
     uint8_t read();
     void write();
 
+    void execute();
     void reset();
-    void irq() {};
-    void nmi() {};
 
 private:
     // adressing modes
@@ -142,11 +145,13 @@ private:
     void SED();
     void SEI();
 
-    // system functions
-    void BRK();
+    // interrupts
     void RTI();
-    void NOP() {};
+    void BRK();
+    void IRQ() {};
+    void NMI() {};
 
+    void NOP() {};
     void ___() {};
     void JAM() { throw std::exception("invalid opcode!"); }
 
@@ -679,6 +684,7 @@ public:
 
 private:
     enum class extra_cycle {
+        never,
         if_carry,
         if_carry_possible,
         always
@@ -706,6 +712,7 @@ private:
         }
     }
     void branch(bool is_branch);
+    void interrupt(const interrupt_vec& vec);
 };
 
 }

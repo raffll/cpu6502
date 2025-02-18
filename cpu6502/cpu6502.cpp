@@ -11,7 +11,7 @@ cpu6502::cpu6502(i_clock& clock, i_bus& bus)
 void cpu6502::log(bool show)
 {
     if (!show)
-       return;
+        return;
 
     static size_t last_cycle {};
     std::string cycle = (clock.get_cycles() == last_cycle)
@@ -44,34 +44,12 @@ void cpu6502::log(bool show)
     std::printf(ss.str().c_str());
 }
 
-static bool add_cycle = false;
-static bool add_carry = false;
-static bool acc_addressing = false;
-
-void cpu6502::execute()
-{
-    add_cycle = false;
-    add_carry = false;
-    acc_addressing = false;
-
-    address = PC;
-    PC++;
-    oc = read();
-    cycle();
-
-    instructions[oc].addressing(*this);
-    instructions[oc].operation(*this);
-}
-
 void cpu6502::run(uint16_t stop)
 {
-    try {
-        while (address != stop) {
-            execute();
-        }
-        log(true);
-    } catch (const std::exception&) {
+    while (address != stop) {
+        execute();
     }
+    log(true);
 }
 
 void cpu6502::cycle()
@@ -92,6 +70,10 @@ void cpu6502::write()
     control = false;
     bus.write(address, data);
 }
+
+static bool add_cycle = false;
+static bool add_carry = false;
+static bool acc_addressing = false;
 
 static uint8_t add_register(
     uint8_t byte,
@@ -147,6 +129,21 @@ static cpu6502::status status_byte(uint8_t byte)
     return status;
 }
 
+void cpu6502::execute()
+{
+    add_cycle = false;
+    add_carry = false;
+    acc_addressing = false;
+
+    address = PC;
+    PC++;
+    oc = read();
+    cycle();
+
+    instructions[oc].addressing(*this);
+    instructions[oc].operation(*this);
+}
+
 void cpu6502::reset()
 {
     oc = {};
@@ -167,8 +164,7 @@ void cpu6502::reset()
 void cpu6502::ACC()
 {
     acc_addressing = true;
-    address = PC;
-    cycle();
+    IMP();
 }
 
 void cpu6502::IMP()
@@ -328,6 +324,9 @@ void cpu6502::load(extra_cycle e)
     cycle();
 
     switch (e) {
+    case extra_cycle::never:
+        break;
+
     case extra_cycle::if_carry:
         if (add_carry) {
             address += 0x0100;
@@ -853,7 +852,30 @@ void cpu6502::SEI()
     P.I = 1;
 };
 
-void cpu6502::BRK()
+void cpu6502::RTI()
+{
+    address = stack_address(S);
+    S++;
+    cycle();
+
+    address = stack_address(S);
+    S++;
+    P = status_byte(read());
+    cycle();
+
+    address = stack_address(S);
+    S++;
+    uint8_t pcl = read();
+    cycle();
+
+    address = stack_address(S);
+    uint8_t pch = read();
+    cycle();
+
+    PC = (pch << 8) | pcl;
+};
+
+void cpu6502::interrupt(const interrupt_vec& vec)
 {
     address = PC;
     PC++;
@@ -877,11 +899,11 @@ void cpu6502::BRK()
     write();
     cycle();
 
-    address = 0xFFFE;
+    address = vec.first;
     uint8_t adl = read();
     cycle();
 
-    address = 0xFFFF;
+    address = vec.second;
     uint8_t adh = read();
     cycle();
 
@@ -889,27 +911,12 @@ void cpu6502::BRK()
     P.I = 1;
 };
 
-void cpu6502::RTI()
+void cpu6502::BRK()
 {
-    address = stack_address(S);
-    S++;
-    cycle();
-
-    address = stack_address(S);
-    S++;
-    P = status_byte(read());
-    cycle();
-
-    address = stack_address(S);
-    S++;
-    uint8_t pcl = read();
-    cycle();
-
-    address = stack_address(S);
-    uint8_t pch = read();
-    cycle();
-
-    PC = (pch << 8) | pcl;
+    interrupt(IRQ_VEC);
 };
+
+void IRQ() {};
+void NMI() {};
 
 }
