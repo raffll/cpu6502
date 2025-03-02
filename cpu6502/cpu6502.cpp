@@ -280,6 +280,7 @@ void cpu6502::IDX()
 
     address = bal;
     add_register(bal, X);
+    read();
     cycle();
 
     address = bal;
@@ -466,6 +467,7 @@ void cpu6502::pull()
 {
     address = stack_address(S);
     S++;
+    read();
     cycle();
 
     address = stack_address(S);
