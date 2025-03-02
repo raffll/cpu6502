@@ -71,21 +71,6 @@ void cpu6502::write()
     bus.write(address, data);
 }
 
-static bool add_cycle = false;
-static bool add_carry = false;
-static bool acc_addressing = false;
-
-static uint8_t add_register(
-    uint8_t byte,
-    uint8_t offset,
-    bool do_carry = false)
-{
-    byte += offset;
-    add_cycle = do_carry;
-    add_carry = do_carry && byte < offset;
-    return byte;
-}
-
 static bool is_zero(uint8_t byte)
 {
     return byte == 0;
@@ -131,7 +116,7 @@ static cpu6502::status status_byte(uint8_t byte)
 
 void cpu6502::execute()
 {
-    add_cycle = false;
+    add_cycle = cpu6502::cycle_mode::never;
     add_carry = false;
     acc_addressing = false;
 
@@ -161,6 +146,12 @@ void cpu6502::reset()
     data = {};
 }
 
+void cpu6502::add_register(uint8_t& byte, uint8_t reg)
+{
+    byte += reg;
+    add_carry = byte < reg;
+}
+
 void cpu6502::ACC()
 {
     acc_addressing = true;
@@ -170,6 +161,7 @@ void cpu6502::ACC()
 void cpu6502::IMP()
 {
     address = PC;
+    read();
     cycle();
 }
 
@@ -189,7 +181,7 @@ void cpu6502::ZPG()
     address = adl;
 }
 
-void cpu6502::zero_page(uint8_t offset)
+void cpu6502::zero_page(uint8_t reg)
 {
     address = PC;
     PC++;
@@ -197,7 +189,7 @@ void cpu6502::zero_page(uint8_t offset)
     cycle();
 
     address = bal;
-    bal = add_register(bal, offset);
+    add_register(bal, reg);
     cycle();
 
     address = bal;
@@ -228,8 +220,10 @@ void cpu6502::ABS()
     address = (adh << 8) | adl;
 }
 
-void cpu6502::absolute(uint8_t offset)
+void cpu6502::absolute(uint8_t reg)
 {
+    add_cycle = cycle_mode::if_carry;
+
     address = PC;
     PC++;
     uint8_t bal = read();
@@ -237,7 +231,7 @@ void cpu6502::absolute(uint8_t offset)
 
     address = PC;
     PC++;
-    bal = add_register(bal, offset, true);
+    add_register(bal, reg);
     uint8_t bah = read();
     cycle();
 
@@ -285,7 +279,8 @@ void cpu6502::IDX()
     cycle();
 
     address = bal;
-    bal = add_register(bal, X);
+    add_register(bal, X);
+    read();
     cycle();
 
     address = bal;
@@ -301,6 +296,8 @@ void cpu6502::IDX()
 
 void cpu6502::IDY()
 {
+    add_cycle = cycle_mode::if_carry;
+
     address = PC;
     PC++;
     uint8_t ial = read();
@@ -311,23 +308,20 @@ void cpu6502::IDY()
     cycle();
 
     address = ial + 1;
-    bal = add_register(bal, Y, true);
+    add_register(bal, Y);
     uint8_t bah = read();
     cycle();
 
     address = (bah << 8) | bal;
 }
 
-void cpu6502::load(extra_cycle e)
+void cpu6502::extra_cycle()
 {
-    read();
-    cycle();
-
-    switch (e) {
-    case extra_cycle::never:
+    switch (add_cycle) {
+    case cycle_mode::never:
         break;
 
-    case extra_cycle::if_carry:
+    case cycle_mode::if_carry:
         if (add_carry) {
             address += 0x0100;
             read();
@@ -335,20 +329,30 @@ void cpu6502::load(extra_cycle e)
         }
         break;
 
-    case extra_cycle::if_carry_possible:
+    case cycle_mode::if_carry_possible:
         if (add_carry) {
             address += 0x0100;
-            read();
         }
+        read();
+        cycle();
+        break;
 
-        if (add_cycle) {
-            cycle();
-        }
+    case cycle_mode::always:
+        read();
+        cycle();
         break;
 
     default:
         throw std::exception("");
     }
+}
+
+void cpu6502::load()
+{
+    read();
+    cycle();
+
+    extra_cycle();
 }
 
 void cpu6502::LDA()
@@ -375,46 +379,31 @@ void cpu6502::LDY()
     P.N = is_negative(Y);
 }
 
-void cpu6502::store(extra_cycle e)
+void cpu6502::store(uint8_t reg)
 {
-    switch (e) {
-    case extra_cycle::if_carry_possible:
-        if (add_carry) {
-            address += 0x0100;
-        }
-        if (add_cycle) {
-            cycle();
-        }
-        break;
+    if (add_cycle == cycle_mode::if_carry)
+        add_cycle = cycle_mode::if_carry_possible;
 
-    case extra_cycle::always:
-        cycle();
-        break;
+    extra_cycle();
 
-    default:
-        throw std::exception("");
-    }
-
+    data = reg;
     write();
     cycle();
 }
 
 void cpu6502::STA()
 {
-    data = A;
-    store();
+    store(A);
 }
 
 void cpu6502::STX()
 {
-    data = X;
-    store();
+    store(X);
 }
 
 void cpu6502::STY()
 {
-    data = Y;
-    store();
+    store(Y);
 }
 
 void cpu6502::transfer(uint8_t src, uint8_t& dst)
@@ -478,6 +467,7 @@ void cpu6502::pull()
 {
     address = stack_address(S);
     S++;
+    read();
     cycle();
 
     address = stack_address(S);
@@ -586,12 +576,11 @@ void cpu6502::CPY()
 
 void cpu6502::INC()
 {
-    load(extra_cycle::if_carry_possible);
-    data++;
-    cycle();
+    auto inc = [&](auto& reg) {
+        reg++;
+    };
 
-    write();
-    cycle();
+    modify(inc);
 
     P.Z = is_zero(data);
     P.N = is_negative(data);
@@ -623,12 +612,11 @@ void cpu6502::decrement(uint8_t& reg)
 
 void cpu6502::DEC()
 {
-    load(extra_cycle::if_carry_possible);
-    data--;
-    cycle();
+    auto dec = [&](auto& reg) {
+        reg--;
+    };
 
-    write();
-    cycle();
+    modify(dec);
 
     P.Z = is_zero(data);
     P.N = is_negative(data);
@@ -654,7 +642,7 @@ void cpu6502::ASL()
         P.N = is_negative(reg);
     };
 
-    shift(asl, acc_addressing);
+    modify(asl);
 };
 
 void cpu6502::LSR()
@@ -667,7 +655,7 @@ void cpu6502::LSR()
         P.N = is_negative(reg);
     };
 
-    shift(lsr, acc_addressing);
+    modify(lsr);
 };
 
 void cpu6502::ROL()
@@ -681,7 +669,7 @@ void cpu6502::ROL()
         P.N = is_negative(reg);
     };
 
-    shift(rol, acc_addressing);
+    modify(rol);
 };
 
 void cpu6502::ROR()
@@ -695,7 +683,7 @@ void cpu6502::ROR()
         P.N = is_negative(reg);
     };
 
-    shift(ror, acc_addressing);
+    modify(ror);
 };
 
 void cpu6502::JMP()
@@ -726,11 +714,9 @@ void cpu6502::JSR()
     cycle();
 
     address = PC;
-    PC++;
     uint8_t adh = read();
-    cycle();
-
     PC = (adh << 8) | adl;
+    cycle();
 };
 
 void cpu6502::RTS()
@@ -746,13 +732,12 @@ void cpu6502::RTS()
 
     address = stack_address(S);
     uint8_t pch = read();
-    cycle();
-
-    address = (pch << 8) | pcl;
-    cycle();
-
     PC = (pch << 8) | pcl;
+    cycle();
+
+    address = PC;
     PC++;
+    cycle();
 };
 
 void cpu6502::branch(bool is_branch)
@@ -765,14 +750,22 @@ void cpu6502::branch(bool is_branch)
     if (!is_branch)
         return;
 
-    address = PC;
     uint8_t pch = hi_byte(PC);
-    PC += offset;
+    uint8_t pcl = lo_byte(PC);
+
+    uint16_t result = PC;
+    result += offset;
+    uint8_t hi = hi_byte(result);
+    uint8_t lo = lo_byte(result);
+
+    PC = (pch << 8) | lo;
+    address = PC;
     cycle();
 
-    if (pch == hi_byte(PC)) // no page crosssing
+    if (hi == pch)
         return;
 
+    PC = (hi << 8) | lo;
     address = PC;
     cycle();
 }
@@ -870,9 +863,8 @@ void cpu6502::RTI()
 
     address = stack_address(S);
     uint8_t pch = read();
-    cycle();
-
     PC = (pch << 8) | pcl;
+    cycle();
 };
 
 void cpu6502::interrupt(const interrupt_vec& vec)
@@ -905,9 +897,9 @@ void cpu6502::interrupt(const interrupt_vec& vec)
 
     address = vec.second;
     uint8_t adh = read();
+    PC = (adh << 8) | adl;
     cycle();
 
-    PC = (adh << 8) | adl;
     P.I = 1;
 };
 

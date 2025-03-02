@@ -683,17 +683,23 @@ public:
     } };
 
 private:
-    enum class extra_cycle {
+    enum class cycle_mode {
         never,
         if_carry,
         if_carry_possible,
         always
     };
 
-    void zero_page(uint8_t offset);
-    void absolute(uint8_t offset);
-    void load(extra_cycle e = extra_cycle::if_carry);
-    void store(extra_cycle e = extra_cycle::if_carry_possible);
+    cpu6502::cycle_mode add_cycle = cpu6502::cycle_mode::never;
+    bool add_carry = false;
+    bool acc_addressing = false;
+
+    void add_register(uint8_t& byte, uint8_t reg);
+    void zero_page(uint8_t reg);
+    void absolute(uint8_t reg);
+    void extra_cycle();
+    void load();
+    void store(uint8_t reg);
     void transfer(uint8_t src, uint8_t& dst);
     void push();
     void pull();
@@ -701,14 +707,22 @@ private:
     void increment(uint8_t& reg);
     void decrement(uint8_t& reg);
     void compare(uint8_t reg);
-    void shift(auto&& op, bool acc_addressing)
+    void modify(auto&& op)
     {
         if (acc_addressing) {
             op(A);
         } else {
-            load(extra_cycle::if_carry_possible);
+            if (add_cycle == cycle_mode::if_carry)
+                add_cycle = cycle_mode::if_carry_possible;
+
+            load();
+
+            write();
             op(data);
-            store(extra_cycle::always);
+            cycle();
+
+            write();
+            cycle();
         }
     }
     void branch(bool is_branch);
