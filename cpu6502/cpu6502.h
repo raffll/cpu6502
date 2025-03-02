@@ -716,7 +716,7 @@ private:
                 add_cycle = cycle_mode::if_carry_possible;
 
             load();
-            
+
             write();
             op(data);
             cycle();

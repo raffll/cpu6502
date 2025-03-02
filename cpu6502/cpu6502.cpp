@@ -161,6 +161,7 @@ void cpu6502::ACC()
 void cpu6502::IMP()
 {
     address = PC;
+    read();
     cycle();
 }
 
